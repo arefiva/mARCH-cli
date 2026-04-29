@@ -10,15 +10,15 @@ from pathlib import Path
 from datetime import datetime
 from unittest.mock import patch, MagicMock
 
-from copilot.github_auth import GitHubAuthenticator, GitHubToken
-from copilot.github_api import (
+from mARCH.github_auth import GitHubAuthenticator, GitHubToken
+from mARCH.github_api import (
     GitHubAPIClient,
     RepositoryInfo,
     IssueInfo,
     PRInfo,
 )
-from copilot.github_context import GitContextExtractor, RepositoryContext
-from copilot.github_integration import GitHubIntegration
+from mARCH.github_context import GitContextExtractor, RepositoryContext
+from mARCH.github_integration import GitHubIntegration
 
 
 class TestGitHubToken:

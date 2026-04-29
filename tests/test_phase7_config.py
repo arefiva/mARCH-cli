@@ -12,19 +12,19 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from copilot.state_persistence import (
+from mARCH.state_persistence import (
     StatePersistenceManager,
     SessionState,
     ConversationSnapshot,
     UserPreferences,
     get_state_manager,
 )
-from copilot.lsp_config import (
+from mARCH.lsp_config import (
     LSPConfigManager,
     LSPServerConfig,
     get_lsp_config_manager,
 )
-from copilot.exceptions import ConfigurationError
+from mARCH.exceptions import ConfigurationError
 
 
 class TestUserPreferences:

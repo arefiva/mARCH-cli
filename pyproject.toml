@@ -3,16 +3,16 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "copilot-cli"
+name = "mARCH"
 version = "0.1.0"
-description = "GitHub Copilot CLI brings AI-powered coding assistance directly to your terminal"
+description = "mARCH brings AI-powered coding assistance directly to your terminal"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
     {name = "GitHub", email = "support@github.com"}
 ]
-keywords = ["copilot", "github", "cli", "ai", "coding-assistant"]
+keywords = ["march", "github", "cli", "ai", "coding-assistant"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -94,22 +94,22 @@ security = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/github/copilot-cli-python"
-Documentation = "https://github.com/github/copilot-cli-python"
-Repository = "https://github.com/github/copilot-cli-python"
-Issues = "https://github.com/github/copilot-cli-python/issues"
+Homepage = "https://github.com/github/mARCH"
+Documentation = "https://github.com/github/mARCH"
+Repository = "https://github.com/github/mARCH"
+Issues = "https://github.com/github/mARCH/issues"
 
 [project.scripts]
-copilot = "cli:cli_main"
+march = "mARCH.cli:cli_main"
 
 [tool.setuptools]
-packages = ["copilot"]
+packages = ["mARCH"]
 
 [tool.setuptools.package-dir]
 "" = "src"
 
 [tool.setuptools.package-data]
-copilot = ["py.typed"]
+mARCH = ["py.typed"]
 
 [tool.black]
 line-length = 100
@@ -133,7 +133,7 @@ extend-exclude = '''
 profile = "black"
 line_length = 100
 skip_gitignore = true
-known_first_party = ["copilot"]
+known_first_party = ["mARCH"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -153,7 +153,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/copilot"]
+source = ["src/mARCH"]
 branch = true
 
 [tool.coverage.report]

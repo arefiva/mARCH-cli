@@ -9,7 +9,7 @@ from pathlib import Path
 @pytest.fixture
 def temp_config_dir(tmp_path):
     """Create a temporary config directory for testing."""
-    config_dir = tmp_path / ".copilot"
+    config_dir = tmp_path / ".march"
     config_dir.mkdir()
     return config_dir
 

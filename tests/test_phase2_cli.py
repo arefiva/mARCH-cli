@@ -7,8 +7,8 @@ Tests for slash command parsing, CLI argument handling, and command routing.
 import pytest
 from pathlib import Path
 
-from copilot.slash_commands import SlashCommandParser, SlashCommandType, ParsedCommand
-from copilot.cli import (
+from mARCH.slash_commands import SlashCommandParser, SlashCommandType, ParsedCommand
+from mARCH.cli import (
     AppContext,
     get_app_context,
     handle_model_command,

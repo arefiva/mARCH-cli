@@ -8,7 +8,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch, MagicMock
 
-from copilot.agent_state import (
+from mARCH.agent_state import (
     AgentState,
     ConversationMode,
     ConversationMessage,
@@ -18,14 +18,14 @@ from copilot.agent_state import (
     AgentManager,
     get_agent_manager,
 )
-from copilot.ai_client import (
+from mARCH.ai_client import (
     AIModelFactory,
     ConversationClient,
     CodeAnalysisClient,
     get_conversation_client,
     get_code_analysis_client,
 )
-from copilot.mcp_integration import (
+from mARCH.mcp_integration import (
     MCPResourceType,
     MCPResource,
     MCPTool,

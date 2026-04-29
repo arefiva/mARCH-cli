@@ -6,7 +6,7 @@ Tests system validation, health checks, and integration.
 
 import pytest
 
-from copilot.validation import (
+from mARCH.validation import (
     HealthCheckResult,
     HealthChecker,
     DependencyAuditor,

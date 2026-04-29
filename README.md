@@ -1,6 +1,6 @@
-# GitHub Copilot CLI (Python)
+# mARCH
 
-A full Python rewrite of the GitHub Copilot CLI application, converting the original 13.3MB minified Node.js bundle to a modern, maintainable Python implementation.
+A full Python rewrite of the mARCH application, converting the original 13.3MB minified Node.js bundle to a modern, maintainable Python implementation.
 
 ## Status: 90% Complete (Phases 1-9 of 10)
 
@@ -38,12 +38,12 @@ A full Python rewrite of the GitHub Copilot CLI application, converting the orig
 
 ```bash
 # Install from source
-git clone https://github.com/github/copilot-cli-python.git
-cd copilot-cli-python
+git clone https://github.com/github/march.git
+cd march
 pip install -e .
 
 # Verify installation
-copilot --version
+march --version
 ```
 
 ### Optional Dependencies
@@ -72,16 +72,16 @@ choco install ripgrep  # Windows
 
 ```bash
 # Start interactive REPL
-copilot
+march
 
 # Show version and features
-copilot --version
+march --version
 
 # Enable experimental features
-copilot --experimental
+march --experimental
 
 # Set log level
-copilot --log-level debug
+march --log-level debug
 ```
 
 ### Slash Commands
@@ -100,7 +100,7 @@ Inside the interactive REPL:
 
 ### Configuration
 
-User configuration is stored in `~/.copilot/config.json`:
+User configuration is stored in `~/.march/config.json`:
 
 ```json
 {
@@ -111,14 +111,14 @@ User configuration is stored in `~/.copilot/config.json`:
 }
 ```
 
-User preferences (theme, recent models) are stored in `~/.copilot/preferences.json`.
+User preferences (theme, recent models) are stored in `~/.march/preferences.json`.
 
 ## Architecture
 
 ### Module Structure
 
 ```
-src/copilot/
+src/mARCH/
 ├── __init__.py              # Package initialization
 ├── cli.py                   # Typer CLI framework and REPL
 ├── slash_commands.py        # Slash command parser
@@ -158,7 +158,7 @@ src/copilot/
 ### Design Patterns
 
 - **Singleton Pattern**: Global managers for CLI state, configuration, GitHub, TUI, agents, etc.
-- **Facade Pattern**: High-level interfaces (`CodeIntelligence`, `CopilotTUI`, `GitHubIntegration`)
+- **Facade Pattern**: High-level interfaces (`CodeIntelligence`, `mARCHTUI`, `GitHubIntegration`)
 - **State Machine**: Agent state management with defined transitions
 - **Plugin Architecture**: MCP protocol for tool extensibility
 
@@ -171,7 +171,7 @@ src/copilot/
 export GH_TOKEN="github_pat_..."
 export GITHUB_TOKEN="github_pat_..."  # Fallback
 
-# Copilot settings
+# mARCH settings
 export COPILOT_MODEL="claude-sonnet-4.5"
 export COPILOT_LOG_LEVEL="DEBUG"
 export COPILOT_EXPERIMENTAL="true"
@@ -179,7 +179,7 @@ export COPILOT_EXPERIMENTAL="true"
 
 ### LSP Configuration
 
-Language servers are configured in `~/.copilot/lsp-config.json`. Default servers include:
+Language servers are configured in `~/.march/lsp-config.json`. Default servers include:
 - Python (pylsp)
 - JavaScript/TypeScript (typescript-language-server)
 - Go (gopls)
@@ -200,7 +200,7 @@ pytest tests/test_phase2_cli.py
 # ... etc for phases 3-9
 
 # Run with coverage
-pytest --cov=src/copilot
+pytest --cov=src/mARCH
 ```
 
 ### Code Quality
@@ -213,7 +213,7 @@ black src/ tests/
 ruff check src/ tests/
 
 # Type checking with mypy
-mypy src/copilot
+mypy src/mARCH
 ```
 
 ### Building and Distribution
@@ -252,17 +252,17 @@ twine upload dist/*
 ```bash
 # Verify token is set correctly
 export GH_TOKEN="your_token"
-copilot /status
+march /status
 
 # Re-authenticate
-copilot /login
+march /login
 ```
 
 ### LSP Not Working
 
 ```bash
 # Check LSP configuration
-copilot /status  # Shows LSP status
+march /status  # Shows LSP status
 
 # Install required language server
 pip install pylsp  # For Python
@@ -307,7 +307,7 @@ MIT (same as original JavaScript version)
 
 ## References
 
-- [Original JavaScript Copilot CLI](https://github.com/github/copilot-cli)
+- [Original JavaScript mARCH CLI](https://github.com/github/march-cli)
 - [Tree-sitter Documentation](https://tree-sitter.github.io/)
 - [Language Server Protocol Specification](https://microsoft.github.io/language-server-protocol/)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
@@ -316,7 +316,7 @@ MIT (same as original JavaScript version)
 ## Support
 
 For issues and questions:
-- Check existing issues: [GitHub Issues](https://github.com/github/copilot-cli-python/issues)
+- Check existing issues: [GitHub Issues](https://github.com/github/march/issues)
 - Review documentation: See `docs/` directory
 - Create a new issue with detailed information
 

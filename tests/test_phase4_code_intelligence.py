@@ -8,17 +8,17 @@ import pytest
 from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch
 
-from copilot.tree_sitter import (
+from mARCH.tree_sitter import (
     TreeSitterParser,
     TreeSitterLanguage,
     get_tree_sitter_parser,
 )
-from copilot.ripgrep_search import (
+from mARCH.ripgrep_search import (
     RipgrepSearcher,
     SearchMatch,
     get_ripgrep_searcher,
 )
-from copilot.lsp_client import (
+from mARCH.lsp_client import (
     Position,
     Range,
     Location,
@@ -28,13 +28,13 @@ from copilot.lsp_client import (
     LSPManager,
     get_lsp_manager,
 )
-from copilot.syntax_highlight import (
+from mARCH.syntax_highlight import (
     CodeHighlighter,
     SyntaxHighlightRenderer,
     get_code_highlighter,
     get_syntax_renderer,
 )
-from copilot.code_intelligence import (
+from mARCH.code_intelligence import (
     CodeIntelligence,
     get_code_intelligence,
 )

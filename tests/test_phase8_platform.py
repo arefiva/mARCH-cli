@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 
-from copilot.platform_utils import (
+from mARCH.platform_utils import (
     OSType,
     PlatformInfo,
     ConsoleInfo,
@@ -19,12 +19,12 @@ from copilot.platform_utils import (
     get_platform_info,
     get_console_info,
 )
-from copilot.clipboard import (
+from mARCH.clipboard import (
     ClipboardManager,
     ClipboardError,
     get_clipboard_manager,
 )
-from copilot.image_utils import (
+from mARCH.image_utils import (
     ImageProcessor,
     ImageSize,
     ImageCache,
@@ -164,36 +164,36 @@ class TestPathUtils:
         app_data = PathUtils.get_app_data_dir()
         assert isinstance(app_data, str)
         assert len(app_data) > 0
-        assert "copilot" in app_data.lower()
+        assert "march" in app_data.lower()
 
     def test_get_cache_dir(self):
         """Test getting cache directory."""
         cache = PathUtils.get_cache_dir()
         assert isinstance(cache, str)
         assert len(cache) > 0
-        assert "copilot" in cache.lower()
+        assert "march" in cache.lower()
 
     def test_get_config_dir(self):
         """Test getting config directory."""
         config = PathUtils.get_config_dir()
         assert isinstance(config, str)
         assert len(config) > 0
-        assert "copilot" in config.lower()
+        assert "march" in config.lower()
 
-    def test_app_data_contains_copilot(self):
+    def test_app_data_contains_march(self):
         """Test that app data contains """
         app_data = PathUtils.get_app_data_dir()
-        assert "copilot" in app_data.lower()
+        assert "march" in app_data.lower()
 
-    def test_cache_contains_copilot(self):
+    def test_cache_contains_march(self):
         """Test that cache contains """
         cache = PathUtils.get_cache_dir()
-        assert "copilot" in cache.lower()
+        assert "march" in cache.lower()
 
-    def test_config_contains_copilot(self):
+    def test_config_contains_march(self):
         """Test that config contains """
         config = PathUtils.get_config_dir()
-        assert "copilot" in config.lower()
+        assert "march" in config.lower()
 
 
 class TestClipboardManager:
@@ -425,10 +425,10 @@ class TestIntegration:
         assert len(cache) > 0
         assert len(config) > 0
         
-        # All should contain copilot
-        assert "copilot" in app_data.lower()
-        assert "copilot" in cache.lower()
-        assert "copilot" in config.lower()
+        # All should contain march
+        assert "march" in app_data.lower()
+        assert "march" in cache.lower()
+        assert "march" in config.lower()
 
     def test_image_cache_workflow(self):
         """Test image caching workflow."""

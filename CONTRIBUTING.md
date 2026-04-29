@@ -7,9 +7,9 @@ Thank you for your interest in contributing! This document provides guidelines a
 ### Fork and Clone
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/copilot-cli-python.git
-cd copilot-cli-python
-git remote add upstream https://github.com/github/copilot-cli-python.git
+git clone https://github.com/YOUR_USERNAME/march.git
+cd march
+git remote add upstream https://github.com/github/march.git
 ```
 
 ### Setup Development Environment
@@ -50,7 +50,7 @@ pytest
 pytest tests/test_phase1_foundation.py
 
 # Run with coverage
-pytest --cov=src/copilot
+pytest --cov=src/mARCH
 
 # Run with verbose output
 pytest -v
@@ -66,7 +66,7 @@ black src/ tests/
 ruff check src/ tests/ --fix
 
 # Type check with mypy
-mypy src/copilot
+mypy src/mARCH
 ```
 
 ### Committing Changes
@@ -121,7 +121,7 @@ Fixes #123 (if applicable)
 ### Module Organization
 
 ```
-src/copilot/
+src/mARCH/
 ├── Core modules (cli, config, logging, exceptions)
 ├── Feature modules (github_*, code_*, tui_*)
 ├── Utilities (platform_*, clipboard, image_*, validation)

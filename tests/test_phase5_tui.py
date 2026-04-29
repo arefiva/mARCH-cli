@@ -9,7 +9,7 @@ from datetime import datetime
 from unittest.mock import Mock, patch, MagicMock
 from io import StringIO
 
-from copilot.tui_conversation import (
+from mARCH.tui_conversation import (
     MessageRole,
     Message,
     ConversationRenderer,
@@ -19,13 +19,13 @@ from copilot.tui_conversation import (
     get_input_prompt,
     get_theme_manager,
 )
-from copilot.tui_banner import (
+from mARCH.tui_banner import (
     Banner,
     ProgressBar,
     get_banner,
     get_progress_bar,
 )
-from copilot.tui_layout import (
+from mARCH.tui_layout import (
     PanelLocation,
     TUILayout,
     Window,
@@ -35,7 +35,7 @@ from copilot.tui_layout import (
     get_window_manager,
     get_status_bar,
 )
-from copilot.tui import CopilotTUI, get_copilot_tui
+from mARCH.tui import mARCHTUI, get_march_tui
 
 
 # ============================================================================
@@ -480,27 +480,27 @@ class TestStatusBar:
 
 
 # ============================================================================
-# Copilot TUI Tests
+# mARCH TUI Tests
 # ============================================================================
 
 
-class TestCopilotTUI:
-    """Tests for unified CopilotTUI."""
+class TestmARCHTUI:
+    """Tests for unified mARCHTUI."""
 
     def test_tui_initialization(self):
         """Test TUI initialization."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         assert tui is not None
 
     def test_tui_startup(self):
         """Test TUI startup."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         # Should not crash
         tui.startup(version="0.1.0", show_welcome=True)
 
     def test_add_messages(self):
         """Test adding different message types."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         tui.add_user_message("Hello")
         tui.add_assistant_message("Hi there")
         tui.add_system_message("System info")
@@ -508,13 +508,13 @@ class TestCopilotTUI:
 
     def test_show_help(self):
         """Test showing help."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         # Should not crash
         tui.show_help()
 
     def test_show_messages(self):
         """Test showing different message types."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         # Should not crash
         tui.show_status("Status")
         tui.show_error("Error")
@@ -523,7 +523,7 @@ class TestCopilotTUI:
 
     def test_theme_management(self):
         """Test theme management."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         tui.set_theme("light")
         assert tui.get_theme() == "light"
         themes = tui.list_themes()
@@ -531,29 +531,29 @@ class TestCopilotTUI:
 
     def test_window_management(self):
         """Test window management."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         window = tui.create_window("test", "Test")
         assert window is not None
         assert tui.set_active_window("test")
 
     def test_status_bar_management(self):
         """Test status bar management."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         tui.set_status("key", "Message")
         # Should not crash
         tui.render_status_bar()
 
     def test_clear_conversation(self):
         """Test clearing conversation."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         tui.add_user_message("Test")
         tui.clear_conversation()
         assert len(tui.get_conversation_history()) == 0
 
-    def test_copilot_tui_singleton(self):
-        """Test CopilotTUI singleton."""
-        t1 = get_copilot_tui()
-        t2 = get_copilot_tui()
+    def test_march_tui_singleton(self):
+        """Test mARCHTUI singleton."""
+        t1 = get_march_tui()
+        t2 = get_march_tui()
         assert t1 is t2
 
 
@@ -575,11 +575,11 @@ class TestPhase5Integration:
         assert get_tui_layout() is not None
         assert get_window_manager() is not None
         assert get_status_bar() is not None
-        assert get_copilot_tui() is not None
+        assert get_march_tui() is not None
 
     def test_tui_full_workflow(self):
         """Test complete TUI workflow."""
-        tui = CopilotTUI()
+        tui = mARCHTUI()
         
         # Startup
         tui.startup(version="0.1.0")

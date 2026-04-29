@@ -5,29 +5,29 @@ Basic tests for Phase 1 foundation modules.
 import pytest
 from pathlib import Path
 
-from copilot.exceptions import ConfigurationError, CopilotError
-from copilot.config import ConfigManager, ConfigFile
-from copilot.logging_config import setup_logging, get_logger
+from mARCH.exceptions import ConfigurationError, mARCHError
+from mARCH.config import ConfigManager, ConfigFile
+from mARCH.logging_config import setup_logging, get_logger
 
 
 class TestExceptions:
     """Test exception hierarchy."""
 
-    def test_copilot_error_basic(self):
-        """Test basic CopilotError creation."""
-        err = CopilotError("Test error")
+    def test_march_error_basic(self):
+        """Test basic mARCHError creation."""
+        err = mARCHError("Test error")
         assert str(err) == "Test error"
 
-    def test_copilot_error_with_details(self):
-        """Test CopilotError with details."""
-        err = CopilotError("Test error", details="More info")
+    def test_march_error_with_details(self):
+        """Test mARCHError with details."""
+        err = mARCHError("Test error", details="More info")
         assert "Test error" in str(err)
         assert "More info" in str(err)
 
     def test_configuration_error_inheritance(self):
-        """Test ConfigurationError is a CopilotError."""
+        """Test ConfigurationError is a mARCHError."""
         err = ConfigurationError("Config failed")
-        assert isinstance(err, CopilotError)
+        assert isinstance(err, mARCHError)
 
 
 class TestConfig:
@@ -84,4 +84,4 @@ class TestLogging:
         """Test getting a logger instance."""
         logger = get_logger("test_module")
         assert logger is not None
-        assert "copilot" in logger.name
+        assert "march" in logger.name

@@ -9,10 +9,10 @@ This guide documents the differences between the original JavaScript Copilot CLI
 The command-line interface is **100% compatible** with the JavaScript version:
 
 ```bash
-copilot                    # Start REPL (same as original)
-copilot --version          # Show version
-copilot --experimental     # Enable experimental mode
-copilot --model gpt-4      # Specify model
+march                    # Start REPL (same as original)
+march --version          # Show version
+march --experimental     # Enable experimental mode
+march --model gpt-4      # Specify model
 ```
 
 All slash commands work identically:
@@ -30,9 +30,9 @@ All slash commands work identically:
 **Python version** uses the same configuration locations:
 
 ```
-~/.copilot/config.json              # User configuration
-~/.copilot/preferences.json         # User preferences (NEW in Python)
-~/.copilot/lsp-config.json          # LSP configuration
+~/.march/config.json              # User configuration
+~/.march/preferences.json         # User preferences (NEW in Python)
+~/.march/lsp-config.json          # LSP configuration
 .github/lsp.json                    # Repository LSP config
 ```
 
@@ -44,7 +44,7 @@ Token storage is compatible:
 
 ```bash
 export GH_TOKEN="..."               # Environment variable (same)
-~/.copilot/github_token.json        # File storage (same location)
+~/.march/github_token.json        # File storage (same location)
 ```
 
 ### Installation
@@ -53,7 +53,7 @@ export GH_TOKEN="..."               # Environment variable (same)
 
 ```bash
 # Python version (no build/compile needed)
-pip install copilot-cli-python
+pip install march
 
 # Original (required npm and building)
 npm install -g @github/copilot-cli
@@ -130,7 +130,7 @@ app.js (13.3MB minified)
 
 **Python Version**:
 ```
-src/copilot/
+src/mARCH/
 ├── CLI
 │   ├── cli.py (Typer)
 │   ├── slash_commands.py
@@ -272,14 +272,14 @@ None - Python version achieves **100% feature parity** with original.
 
 ### For JavaScript Users
 
-1. **Install Python version**: `pip install copilot-cli-python`
-2. **No configuration needed**: Existing `~/.copilot/config.json` works
-3. **Run**: `copilot` works identically
+1. **Install Python version**: `pip install march`
+2. **No configuration needed**: Existing `~/.march/config.json` works
+3. **Run**: `march` works identically
 
 ### For JavaScript Developers
 
 1. Review new module structure (more modular than monolithic bundle)
-2. Use `src/copilot/` modules instead of unpacking bundle
+2. Use `src/mARCH/` modules instead of unpacking bundle
 3. Type hints available throughout (new development advantage)
 4. Comprehensive tests as examples
 

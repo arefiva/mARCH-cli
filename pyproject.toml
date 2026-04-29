@@ -1,0 +1,175 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "copilot-cli"
+version = "0.1.0"
+description = "GitHub Copilot CLI brings AI-powered coding assistance directly to your terminal"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "GitHub", email = "support@github.com"}
+]
+keywords = ["copilot", "github", "cli", "ai", "coding-assistant"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+]
+
+dependencies = [
+    # CLI Framework
+    "typer[all]>=0.9.0",
+    
+    # GitHub Integration
+    "PyGithub>=2.1.0",
+    
+    # HTTP Client (modern async/sync)
+    "httpx>=0.25.0",
+    
+    # Terminal UI
+    "rich>=13.7.0",
+    "textual>=0.25.0",
+    
+    # Interactive Input
+    "prompt-toolkit>=3.0.40",
+    
+    # Code Analysis
+    "tree-sitter>=0.21.0",
+    "tree-sitter-python>=0.21.0",
+    "pygments>=2.17.0",
+    
+    # Configuration
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.0.0",
+    
+    # Image Processing
+    "Pillow>=10.1.0",
+    
+    # Clipboard Access
+    "pyperclip>=1.8.2",
+    
+    # Utilities
+    "pydantic-core>=2.14.0",
+    "typing-extensions>=4.8.0",
+    "platformdirs>=4.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.12.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "isort>=5.13.0",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "responses>=0.24.0",
+]
+docs = [
+    "sphinx>=7.2.0",
+    "sphinx-rtd-theme>=2.0.0",
+]
+security = [
+    "pip-audit>=2.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/github/copilot-cli-python"
+Documentation = "https://github.com/github/copilot-cli-python"
+Repository = "https://github.com/github/copilot-cli-python"
+Issues = "https://github.com/github/copilot-cli-python/issues"
+
+[project.scripts]
+copilot = "cli:cli_main"
+
+[tool.setuptools]
+packages = ["copilot"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+copilot = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+known_first_party = ["copilot"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--strict-markers --tb=short -v"
+markers = [
+    "integration: integration tests",
+    "slow: slow tests",
+    "requires_network: tests that require network access",
+]
+
+[tool.coverage.run]
+source = ["src/copilot"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+select = ["E", "F", "W", "I", "N", "UP", "RUF"]
+ignore = ["E501"]
+extend-exclude = [".venv", "venv", ".git", "dist", "build"]

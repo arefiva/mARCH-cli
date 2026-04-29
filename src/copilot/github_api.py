@@ -12,8 +12,8 @@ from github.Issue import Issue
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 
-from github_auth import GitHubAuthenticator
-from src.copilot.logging_config import get_logger
+from copilot.github_auth import GitHubAuthenticator
+from copilot.logging_config import get_logger
 
 logger = get_logger(__name__)
 

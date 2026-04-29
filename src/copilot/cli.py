@@ -11,11 +11,11 @@ import typer
 from rich.console import Console
 
 from copilot import __version__
-from config import get_config_manager
-from exceptions import CopilotError
-from github_integration import GitHubIntegration
-import logging_config
-from slash_commands import SlashCommandParser, SlashCommandType
+from copilot import logging_config
+from copilot.config import get_config_manager
+from copilot.exceptions import CopilotError
+from copilot.github_integration import GitHubIntegration
+from copilot.slash_commands import SlashCommandParser, SlashCommandType
 
 logger = logging_config.get_logger(__name__)
 console = Console()

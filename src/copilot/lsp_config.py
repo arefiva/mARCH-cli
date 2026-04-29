@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from exceptions import ConfigurationError
+from copilot.exceptions import ConfigurationError
 
 
 @dataclass

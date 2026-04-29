@@ -12,7 +12,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from exceptions import ConfigurationError
+from copilot.exceptions import ConfigurationError
 
 
 class AppSettings(BaseSettings):

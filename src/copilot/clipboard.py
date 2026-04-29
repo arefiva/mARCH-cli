@@ -6,8 +6,8 @@ Provides abstraction for reading and writing to system clipboard.
 
 import subprocess
 
-from exceptions import CopilotError
-from platform_utils import get_platform_info
+from copilot.exceptions import CopilotError
+from copilot.platform_utils import get_platform_info
 
 
 class ClipboardError(CopilotError):

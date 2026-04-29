@@ -13,8 +13,8 @@ from pathlib import Path
 import httpx
 from rich.console import Console
 
-from exceptions import AuthenticationError
-from src.copilot.logging_config import get_logger
+from copilot.exceptions import AuthenticationError
+from copilot.logging_config import get_logger
 
 logger = get_logger(__name__)
 console = Console()

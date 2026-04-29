@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from PIL.Image import Image
 
-from exceptions import CopilotError
+from copilot.exceptions import CopilotError
 
 
 class ImageError(CopilotError):

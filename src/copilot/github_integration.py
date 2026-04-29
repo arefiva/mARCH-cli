@@ -6,10 +6,10 @@ Provides centralized access to GitHub authentication, API, and context extractio
 
 from pathlib import Path
 
-from github_api import GitHubAPIClient
-from github_auth import GitHubAuthenticator, GitHubToken
-from github_context import GitContextExtractor, RepositoryContext
-from src.copilot.logging_config import get_logger
+from copilot.github_api import GitHubAPIClient
+from copilot.github_auth import GitHubAuthenticator, GitHubToken
+from copilot.github_context import GitContextExtractor, RepositoryContext
+from copilot.logging_config import get_logger
 
 logger = get_logger(__name__)
 

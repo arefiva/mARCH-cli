@@ -6,7 +6,7 @@ Tests system validation, health checks, and integration.
 
 import pytest
 
-from mARCH.validation import (
+from mARCH.validation.validation import (
     HealthCheckResult,
     HealthChecker,
     DependencyAuditor,

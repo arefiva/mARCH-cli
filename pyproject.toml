@@ -100,10 +100,21 @@ Repository = "https://github.com/github/mARCH"
 Issues = "https://github.com/github/mARCH/issues"
 
 [project.scripts]
-march = "mARCH.cli:cli_main"
+march = "mARCH.cli.cli:cli_main"
 
 [tool.setuptools]
-packages = ["mARCH"]
+packages = [
+    "mARCH",
+    "mARCH.cli",
+    "mARCH.core",
+    "mARCH.config",
+    "mARCH.github",
+    "mARCH.code_intelligence",
+    "mARCH.ui",
+    "mARCH.platform",
+    "mARCH.state",
+    "mARCH.validation",
+]
 
 [tool.setuptools.package-dir]
 "" = "src"

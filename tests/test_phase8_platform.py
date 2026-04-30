@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 
-from mARCH.platform_utils import (
+from mARCH.platform.platform_utils import (
     OSType,
     PlatformInfo,
     ConsoleInfo,
@@ -19,12 +19,12 @@ from mARCH.platform_utils import (
     get_platform_info,
     get_console_info,
 )
-from mARCH.clipboard import (
+from mARCH.platform.clipboard import (
     ClipboardManager,
     ClipboardError,
     get_clipboard_manager,
 )
-from mARCH.image_utils import (
+from mARCH.platform.image_utils import (
     ImageProcessor,
     ImageSize,
     ImageCache,

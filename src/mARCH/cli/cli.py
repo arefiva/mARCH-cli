@@ -14,12 +14,12 @@ from rich.console import Console
 from mARCH import __version__
 from mARCH import logging_config
 from mARCH.logging_config import setup_logging
-from mARCH.config import get_config_manager
+from mARCH.config.config import get_config_manager
 from mARCH.exceptions import mARCHError
-from mARCH.github_integration import GitHubIntegration
-from mARCH.slash_commands import SlashCommandParser, SlashCommandType
-from mARCH.ai_client import ConversationClient
-from mARCH.agent_state import Agent, ConversationMode
+from mARCH.github.github_integration import GitHubIntegration
+from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType
+from mARCH.core.ai_client import ConversationClient
+from mARCH.core.agent_state import Agent, ConversationMode
 
 logger = logging_config.get_logger(__name__)
 console = Console()

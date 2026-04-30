@@ -7,8 +7,8 @@ Tests for slash command parsing, CLI argument handling, and command routing.
 import pytest
 from pathlib import Path
 
-from mARCH.slash_commands import SlashCommandParser, SlashCommandType, ParsedCommand
-from mARCH.cli import (
+from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType, ParsedCommand
+from mARCH.cli.cli import (
     AppContext,
     get_app_context,
     handle_model_command,

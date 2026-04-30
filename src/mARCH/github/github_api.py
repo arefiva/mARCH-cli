@@ -12,7 +12,7 @@ from github.Issue import Issue
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 
-from mARCH.github_auth import GitHubAuthenticator
+from mARCH.github.github_auth import GitHubAuthenticator
 from mARCH.logging_config import get_logger
 
 logger = get_logger(__name__)

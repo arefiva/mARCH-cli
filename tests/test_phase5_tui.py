@@ -9,7 +9,7 @@ from datetime import datetime
 from unittest.mock import Mock, patch, MagicMock
 from io import StringIO
 
-from mARCH.tui_conversation import (
+from mARCH.ui.tui_conversation import (
     MessageRole,
     Message,
     ConversationRenderer,
@@ -19,13 +19,13 @@ from mARCH.tui_conversation import (
     get_input_prompt,
     get_theme_manager,
 )
-from mARCH.tui_banner import (
+from mARCH.ui.tui_banner import (
     Banner,
     ProgressBar,
     get_banner,
     get_progress_bar,
 )
-from mARCH.tui_layout import (
+from mARCH.ui.tui_layout import (
     PanelLocation,
     TUILayout,
     Window,
@@ -35,7 +35,7 @@ from mARCH.tui_layout import (
     get_window_manager,
     get_status_bar,
 )
-from mARCH.tui import mARCHTUI, get_march_tui
+from mARCH.ui.tui import mARCHTUI, get_march_tui
 
 
 # ============================================================================

@@ -7,7 +7,7 @@ Provides abstraction for reading and writing to system clipboard.
 import subprocess
 
 from mARCH.exceptions import mARCHError
-from mARCH.platform_utils import get_platform_info
+from mARCH.platform.platform_utils import get_platform_info
 
 
 class ClipboardError(mARCHError):

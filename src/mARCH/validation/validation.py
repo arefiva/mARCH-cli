@@ -132,7 +132,7 @@ class HealthChecker:
 
     def check_platform_support(self) -> HealthCheckResult:
         """Check platform support."""
-        from mARCH.platform_utils import OSType, get_platform_info
+        from mARCH.platform.platform_utils import OSType, get_platform_info
 
         platform = get_platform_info()
 
@@ -153,7 +153,7 @@ class HealthChecker:
 
     def check_configuration(self) -> HealthCheckResult:
         """Check configuration availability."""
-        from mARCH.config import get_config_manager
+        from mARCH.config.config import get_config_manager
 
         try:
             config = get_config_manager()
@@ -175,7 +175,7 @@ class HealthChecker:
 
     def check_state_persistence(self) -> HealthCheckResult:
         """Check state persistence."""
-        from mARCH.state_persistence import get_state_manager
+        from mARCH.state.state_persistence import get_state_manager
 
         try:
             manager = get_state_manager()
@@ -330,7 +330,7 @@ class IntegrationValidator:
     def validate_config_module() -> bool:
         """Validate configuration module loads."""
         try:
-            from mARCH.config import get_config_manager
+            from mARCH.config.config import get_config_manager
             return get_config_manager() is not None
         except Exception:
             return False

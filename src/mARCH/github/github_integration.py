@@ -6,9 +6,9 @@ Provides centralized access to GitHub authentication, API, and context extractio
 
 from pathlib import Path
 
-from mARCH.github_api import GitHubAPIClient
-from mARCH.github_auth import GitHubAuthenticator, GitHubToken
-from mARCH.github_context import GitContextExtractor, RepositoryContext
+from mARCH.github.github_api import GitHubAPIClient
+from mARCH.github.github_auth import GitHubAuthenticator, GitHubToken
+from mARCH.github.github_context import GitContextExtractor, RepositoryContext
 from mARCH.logging_config import get_logger
 
 logger = get_logger(__name__)

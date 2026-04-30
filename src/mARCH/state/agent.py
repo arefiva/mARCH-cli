@@ -5,7 +5,7 @@ Re-exports key components from agent_state for convenience.
 """
 
 # Import and re-export agent components
-from mARCH.agent_state import (
+from mARCH.core.agent_state import (
     Agent,
     AgentContext,
     AgentManager,

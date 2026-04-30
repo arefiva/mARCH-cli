@@ -6,7 +6,7 @@ import pytest
 from pathlib import Path
 
 from mARCH.exceptions import ConfigurationError, mARCHError
-from mARCH.config import ConfigManager, ConfigFile
+from mARCH.config.config import ConfigManager, ConfigFile
 from mARCH.logging_config import setup_logging, get_logger
 
 

@@ -6,6 +6,7 @@ Provides command-line interface with argument parsing, modes, and slash commands
 
 import logging
 import sys
+from typing import Generator
 
 import typer
 from rich.console import Console
@@ -17,6 +18,8 @@ from mARCH.config import get_config_manager
 from mARCH.exceptions import mARCHError
 from mARCH.github_integration import GitHubIntegration
 from mARCH.slash_commands import SlashCommandParser, SlashCommandType
+from mARCH.ai_client import ConversationClient
+from mARCH.agent_state import Agent, ConversationMode
 
 logger = logging_config.get_logger(__name__)
 console = Console()
@@ -39,6 +42,18 @@ class AppContext:
         self.experimental_mode = self.config_manager.is_experimental_enabled()
         self.current_model = self.config_manager.get_model()
         self.show_banner = self.config_manager.settings.show_banner
+        self.agent = Agent(name="mARCH", mode=ConversationMode.INTERACTIVE)
+        self.ai_client: ConversationClient | None = None
+        self._initialize_ai_client()
+
+    def _initialize_ai_client(self) -> None:
+        """Initialize the AI client."""
+        try:
+            # ConversationClient will try to get API key from ANTHROPIC_API_KEY env var
+            self.ai_client = ConversationClient(self.current_model)
+        except Exception as e:
+            logger.debug(f"Failed to initialize AI client: {e}")
+            # AI client is optional - slash commands will work without it
 
 
 # Global context
@@ -273,6 +288,50 @@ def handle_status_command(ctx: AppContext, args: list[str]) -> None:
     console.print()
 
 
+def handle_regular_input(ctx: AppContext, user_input: str) -> None:
+    """
+    Handle regular (non-slash command) user input.
+
+    Args:
+        ctx: Application context
+        user_input: User's input text
+    """
+    if not ctx.ai_client:
+        console.print(
+            "[yellow]⚠️  AI client not available.[/yellow] "
+            "[dim]Please set your API key using /login or set ANTHROPIC_API_KEY[/dim]"
+        )
+        return
+
+    # Add user message to agent history
+    ctx.agent.add_user_message(user_input)
+
+    # Get conversation context with system prompt
+    messages = ctx.agent.get_conversation_context(include_system_prompt=True)
+
+    console.print()
+    console.print("[bold cyan]mARCH:[/bold cyan]", end=" ")
+
+    # Stream response from AI
+    full_response = ""
+    try:
+        for chunk in ctx.ai_client.stream_chat(messages):
+            console.print(chunk, end="", soft_wrap=True)
+            full_response += chunk
+        console.print()  # Newline after response
+    except Exception as e:
+        console.print()
+        console.print(f"[red]Error: {e}[/red]")
+        logger.error(f"AI client error: {e}")
+        return
+
+    # Add assistant response to history
+    if full_response:
+        ctx.agent.add_assistant_message(full_response)
+
+    console.print()
+
+
 @app.command()
 def main(
     experimental: bool = typer.Option(
@@ -350,8 +409,8 @@ def main(
                     handle_slash_command(ctx, user_input)
                     continue
 
-                # Regular input (placeholder for Phase 6 - AI agent)
-                console.print("[dim]Phase 6 placeholder - AI agent will process regular input[/dim]")
+                # Handle regular input - send to AI agent
+                handle_regular_input(ctx, user_input)
 
             except KeyboardInterrupt:
                 console.print()

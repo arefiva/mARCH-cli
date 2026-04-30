@@ -78,4 +78,4 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         Logger instance
     """
-    return logging.getLogger(f"{name}")
+    return logging.getLogger(f"march.{name}")

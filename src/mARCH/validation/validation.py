@@ -285,8 +285,8 @@ class IntegrationValidator:
     def validate_cli_module() -> bool:
         """Validate CLI module loads."""
         try:
-            from mARCH import cli
-            return hasattr(cli, "app") or hasattr(cli, "cli_main")
+            from mARCH.cli.cli import cli_main, app
+            return cli_main is not None and app is not None
         except Exception:
             return False
 
@@ -339,7 +339,7 @@ class IntegrationValidator:
     def validate_state_module() -> bool:
         """Validate state persistence module loads."""
         try:
-            from state_persistence import get_state_manager
+            from mARCH.state.state_persistence import get_state_manager
             return get_state_manager() is not None
         except Exception:
             return False
@@ -348,7 +348,7 @@ class IntegrationValidator:
     def validate_platform_module() -> bool:
         """Validate platform utilities module loads."""
         try:
-            from platform_utils import get_platform_info
+            from mARCH.platform.platform_utils import get_platform_info
             return get_platform_info() is not None
         except Exception:
             return False

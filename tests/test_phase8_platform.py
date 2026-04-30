@@ -204,7 +204,7 @@ class TestClipboardManager:
         manager = ClipboardManager()
         assert manager is not None
 
-    @patch("clipboard.subprocess.run")
+    @patch("mARCH.platform.clipboard.subprocess.run")
     def test_copy_text(self, mock_run):
         """Test copying text to clipboard."""
         mock_run.return_value = Mock(returncode=0)
@@ -217,7 +217,7 @@ class TestClipboardManager:
             # Expected on systems without clipboard support
             pass
 
-    @patch("clipboard.subprocess.run")
+    @patch("mARCH.platform.clipboard.subprocess.run")
     def test_paste_text(self, mock_run):
         """Test pasting text from clipboard."""
         mock_run.return_value = Mock(stdout=b"test text")

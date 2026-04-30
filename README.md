@@ -1,6 +1,6 @@
 # mARCH
 
-A full Python rewrite of the mARCH application, converting the original 13.3MB minified Node.js bundle to a modern, maintainable Python implementation.
+A full Python rewrite of the Github Copilot Cli application, converting the original 13.3MB minified Node.js bundle to a modern, maintainable Python implementation.
 
 ## Status: 90% Complete (Phases 1-9 of 10)
 

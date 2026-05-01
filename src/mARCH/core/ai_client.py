@@ -145,7 +145,7 @@ class ConversationClient:
 
     def __init__(
         self,
-        model_name: str = "claude-sonnet-4.5",
+        model_name: str = "claude-opus-4-1",
         api_key: str | None = None,
     ):
         """Initialize conversation client."""

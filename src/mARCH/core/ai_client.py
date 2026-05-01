@@ -16,9 +16,7 @@ class AIModel(ABC):
     def __init__(self, model_name: str, api_key: str | None = None):
         """Initialize AI model."""
         self.model_name = model_name
-        self.api_key = api_key or os.environ.get(
-            "ANTHROPIC_API_KEY"
-        )
+        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
 
     @abstractmethod
     def complete(
@@ -122,9 +120,7 @@ class AIModelFactory:
     """Factory for creating AI models."""
 
     AVAILABLE_MODELS = {
-        "claude-sonnet-4.5": "Claude Sonnet 4.5",
-        "claude-opus-4.5": "Claude Opus 4.5",
-        "claude-haiku-4.5": "Claude Haiku 4.5",
+        "claude-opus-4-1": "Claude Opus 4.1",
     }
 
     @staticmethod

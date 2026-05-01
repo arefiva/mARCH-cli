@@ -49,8 +49,9 @@ class AppContext:
     def _initialize_ai_client(self) -> None:
         """Initialize the AI client."""
         try:
-            # ConversationClient will try to get API key from ANTHROPIC_API_KEY env var
-            self.ai_client = ConversationClient(self.current_model)
+            # Get API key from config (environment variable or config file)
+            api_key = self.config_manager.settings.anthropic_api_key
+            self.ai_client = ConversationClient(self.current_model, api_key=api_key)
         except Exception as e:
             logger.debug(f"Failed to initialize AI client: {e}")
             # AI client is optional - slash commands will work without it
@@ -144,6 +145,8 @@ def handle_slash_command(ctx: AppContext, command_input: str) -> bool:
             handle_experimental_command(ctx, parsed.args)
         elif parsed.command_type == SlashCommandType.STATUS:
             handle_status_command(ctx, parsed.args)
+        elif parsed.command_type == SlashCommandType.SETUP:
+            handle_setup_command(ctx, parsed.args)
         elif parsed.command_type == SlashCommandType.HELP:
             print_help_text()
         else:
@@ -286,6 +289,51 @@ def handle_status_command(ctx: AppContext, args: list[str]) -> None:
         console.print("[bold]Current Repository:[/bold] not in a Git repository")
 
     console.print()
+
+
+def handle_setup_command(ctx: AppContext, args: list[str]) -> None:
+    """Handle /setup command for configuring Anthropic API key."""
+    console.print("[bold cyan]/setup[/bold cyan] - Configure mARCH CLI")
+    console.print()
+
+    if not args or args[0].lower() == "anthropic":
+        console.print("[bold]Anthropic API Key Configuration[/bold]")
+        console.print()
+
+        # Check current status
+        if ctx.config_manager.settings.anthropic_api_key:
+            console.print("[green]✓[/green] Anthropic API key already configured!")
+            console.print()
+
+        console.print("To use the mARCH CLI with Claude AI, you need an Anthropic API key.")
+        console.print("Get one at: [cyan]https://console.anthropic.com/account/keys[/cyan]")
+        console.print()
+
+        try:
+            api_key = console.input("[cyan]Enter your Anthropic API key (hidden):[/cyan] ", password=True)
+            if not api_key:
+                console.print("[yellow]Cancelled[/yellow]")
+                return
+
+            # Save to config file
+            config = ctx.config_manager.user_config
+            config.anthropic_api_key = api_key
+            ctx.config_manager.save_user_config(config)
+
+            # Update current settings
+            ctx.config_manager._settings = None  # Reset settings to reload
+
+            console.print("[green]✓[/green] Anthropic API key configured successfully!")
+            console.print()
+            console.print("You can now use /chat or just type prompts directly.")
+        except Exception as e:
+            logger.error(f"Error configuring API key: {e}")
+            console.print(f"[red]Error: {e}[/red]")
+    else:
+        console.print("Usage: /setup [anthropic]")
+        console.print()
+        console.print("Examples:")
+        console.print("  /setup anthropic   - Configure Anthropic API key")
 
 
 def handle_regular_input(ctx: AppContext, user_input: str) -> None:

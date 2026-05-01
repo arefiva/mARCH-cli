@@ -33,7 +33,7 @@ class TestUserPreferences:
     def test_create_default_preferences(self):
         """Test creating preferences with defaults."""
         prefs = UserPreferences()
-        assert prefs.default_model == "claude-sonnet-4.5"
+        assert prefs.default_model == "claude-opus-4-1"
         assert prefs.theme == "dark"
         assert prefs.show_banner is True
         assert prefs.enable_experimental is False
@@ -47,7 +47,7 @@ class TestUserPreferences:
 
         assert data["theme"] == "light"
         assert data["enable_experimental"] is True
-        assert data["default_model"] == "claude-sonnet-4.5"
+        assert data["default_model"] == "claude-opus-4-1"
 
     def test_preferences_from_dict(self):
         """Test creating preferences from dictionary."""
@@ -81,11 +81,11 @@ class TestSessionState:
             session_id="test-session",
             created_at=now,
             last_activity=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
         )
 
         assert state.session_id == "test-session"
-        assert state.model == "claude-sonnet-4.5"
+        assert state.model == "claude-opus-4-1"
         assert state.experimental_mode is False
         assert state.theme == "dark"
 
@@ -135,11 +135,11 @@ class TestConversationSnapshot:
             conversation_id="conv-1",
             created_at=now,
             last_message_at=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
         )
 
         assert snapshot.conversation_id == "conv-1"
-        assert snapshot.model == "claude-sonnet-4.5"
+        assert snapshot.model == "claude-opus-4-1"
         assert snapshot.messages == []
 
     def test_snapshot_with_messages(self):
@@ -153,7 +153,7 @@ class TestConversationSnapshot:
             conversation_id="conv-1",
             created_at=now,
             last_message_at=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
             messages=messages,
         )
 
@@ -190,7 +190,7 @@ class TestStatePersistenceManager:
         prefs = manager.load_preferences()
 
         assert isinstance(prefs, UserPreferences)
-        assert prefs.default_model == "claude-sonnet-4.5"
+        assert prefs.default_model == "claude-opus-4-1"
 
     def test_save_and_load_preferences(self, temp_state_dir):
         """Test saving and loading preferences."""
@@ -244,7 +244,7 @@ class TestStatePersistenceManager:
             session_id="test-session",
             created_at=now,
             last_activity=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
         )
 
         manager.save_session(session)
@@ -252,7 +252,7 @@ class TestStatePersistenceManager:
 
         assert loaded is not None
         assert loaded.session_id == "test-session"
-        assert loaded.model == "claude-sonnet-4.5"
+        assert loaded.model == "claude-opus-4-1"
 
     def test_load_nonexistent_session(self, temp_state_dir):
         """Test loading non-existent session returns None."""
@@ -271,7 +271,7 @@ class TestStatePersistenceManager:
                 session_id=f"session-{i}",
                 created_at=now,
                 last_activity=now,
-                model="claude-sonnet-4.5",
+                model="claude-opus-4-1",
             )
             manager.save_session(session)
 
@@ -289,7 +289,7 @@ class TestStatePersistenceManager:
             session_id="temp-session",
             created_at=now,
             last_activity=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
         )
         manager.save_session(session)
         manager.delete_session("temp-session")
@@ -307,7 +307,7 @@ class TestStatePersistenceManager:
             conversation_id="conv-1",
             created_at=now,
             last_message_at=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
             messages=[
                 {"role": "user", "content": "Hello"},
                 {"role": "assistant", "content": "Hi"},
@@ -332,7 +332,7 @@ class TestStatePersistenceManager:
                 conversation_id=f"conv-{i}",
                 created_at=now,
                 last_message_at=now,
-                model="claude-sonnet-4.5",
+                model="claude-opus-4-1",
             )
             manager.save_conversation(snapshot)
 
@@ -349,7 +349,7 @@ class TestStatePersistenceManager:
             conversation_id="temp-conv",
             created_at=now,
             last_message_at=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
         )
         manager.save_conversation(snapshot)
         manager.delete_conversation("temp-conv")
@@ -370,7 +370,7 @@ class TestStatePersistenceManager:
             session_id="old-session",
             created_at=old_date,
             last_activity=old_date,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
         )
         manager.save_session(old_session)
 
@@ -379,7 +379,7 @@ class TestStatePersistenceManager:
             session_id="recent-session",
             created_at=now,
             last_activity=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
         )
         manager.save_session(recent_session)
 
@@ -640,7 +640,7 @@ class TestIntegration:
             session_id="workflow-test",
             created_at=now,
             last_activity=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
         )
         manager.save_session(session)
 
@@ -649,7 +649,7 @@ class TestIntegration:
             conversation_id="conv-workflow",
             created_at=now,
             last_message_at=now,
-            model="claude-sonnet-4.5",
+            model="claude-opus-4-1",
             messages=[
                 {"role": "user", "content": "Test message"},
                 {"role": "assistant", "content": "Test response"},

@@ -20,7 +20,7 @@ def sample_config_file(temp_config_dir):
     config_file = temp_config_dir / "config.json"
     config_file.write_text(
         """{
-    "model": "claude-sonnet-4.5",
+    "model": "claude-opus-4-1",
     "experimental": false
 }"""
     )

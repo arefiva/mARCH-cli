@@ -9,10 +9,14 @@ import os
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from dotenv import load_dotenv
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from mARCH.exceptions import ConfigurationError
+
+# Load environment variables from .env file if it exists
+load_dotenv()
 
 
 class AppSettings(BaseSettings):
@@ -24,8 +28,11 @@ class AppSettings(BaseSettings):
         default=None, validation_alias="GITHUB_TOKEN"
     )
 
+    # Anthropic API Key
+    anthropic_api_key: str | None = Field(default=None)
+
     # AI Model
-    model: str = Field(default="claude-sonnet-4.5")
+    model: str = Field(default="claude-opus-4-1")
 
     # Feature Flags
     experimental: bool = Field(default=False)
@@ -43,6 +50,15 @@ class AppSettings(BaseSettings):
         case_sensitive=False,
         extra="allow",
     )
+
+    @field_validator("anthropic_api_key", mode="before")
+    @classmethod
+    def load_anthropic_key(cls, v: Any) -> str | None:
+        """Load anthropic API key from environment if not provided."""
+        if v is not None:
+            return v
+        # Try different environment variable names
+        return os.environ.get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY")
 
     @property
     def effective_github_token(self) -> str | None:
@@ -64,6 +80,7 @@ class ConfigFile(BaseModel):
     experimental: bool | None = None
     log_level: str | None = None
     lsp_enabled: bool | None = None
+    anthropic_api_key: str | None = None
 
 
 class ConfigManager:

@@ -52,7 +52,7 @@ class TestConfig:
     def test_config_manager_default_settings(self):
         """Test ConfigManager loads default settings."""
         manager = ConfigManager()
-        assert manager.settings.model == "claude-sonnet-4.5"
+        assert manager.settings.model == "claude-opus-4-1"
         assert manager.settings.experimental is False
 
     def test_config_manager_get_model(self, temp_config_dir):
@@ -61,7 +61,7 @@ class TestConfig:
         # Just verify the method returns a string
         model = manager.get_model()
         assert isinstance(model, str)
-        assert model in ["claude-sonnet-4.5", "claude-sonnet-4"]
+        assert model in ["claude-opus-4-1", "claude-sonnet-4"]
 
     def test_config_manager_is_experimental_enabled(self, temp_config_dir):
         """Test checking experimental mode."""

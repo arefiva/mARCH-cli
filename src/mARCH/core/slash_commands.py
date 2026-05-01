@@ -19,6 +19,7 @@ class SlashCommandType(str, Enum):
     EXPERIMENTAL = "experimental"
     HELP = "help"
     STATUS = "status"
+    SETUP = "setup"
 
 
 @dataclass

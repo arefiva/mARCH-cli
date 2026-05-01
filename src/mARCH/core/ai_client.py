@@ -16,7 +16,7 @@ class AIModel(ABC):
     def __init__(self, model_name: str, api_key: str | None = None):
         """Initialize AI model."""
         self.model_name = model_name
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("anthropic_api_key")
 
     @abstractmethod
     def complete(

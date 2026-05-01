@@ -67,6 +67,11 @@ dependencies = [
     "pydantic-core>=2.14.0",
     "typing-extensions>=4.8.0",
     "platformdirs>=4.1.0",
+    
+    # Extension System (Phase 5)
+    "pyyaml>=6.0",
+    "watchdog>=3.0.0",
+    "psutil>=5.9.0",
 ]
 
 [project.optional-dependencies]
@@ -110,10 +115,13 @@ packages = [
     "mARCH.config",
     "mARCH.github",
     "mARCH.code_intelligence",
+    "mARCH.networking",
     "mARCH.ui",
     "mARCH.platform",
     "mARCH.state",
     "mARCH.validation",
+    "mARCH.extension",
+    "mARCH.extension.builtin",
 ]
 
 [tool.setuptools.package-dir]

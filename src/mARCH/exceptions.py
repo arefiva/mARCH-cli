@@ -72,3 +72,71 @@ class UIError(mARCHError):
     """Raised when UI/Terminal operations fail."""
 
     pass
+
+
+# Phase 1: Core Infrastructure Exceptions
+class StreamError(mARCHError):
+    """Raised when stream operations fail."""
+
+    pass
+
+
+class ShellExecutionError(mARCHError):
+    """Raised when shell command execution fails."""
+
+    pass
+
+
+class ProcessError(mARCHError):
+    """Raised when process management operations fail."""
+
+    pass
+
+
+class AsyncExecutionError(mARCHError):
+    """Raised when async operations fail."""
+
+    pass
+
+
+class PayloadError(mARCHError):
+    """Raised when payload encoding/decoding fails."""
+
+    pass
+
+
+# Phase 2: Parsing & Data Processing Exceptions
+class ParsingError(mARCHError):
+    """Raised when parsing operations fail."""
+
+    pass
+
+
+class CommandParsingError(mARCHError):
+    """Raised when command parsing fails."""
+
+    pass
+
+
+class TextParsingError(mARCHError):
+    """Raised when text parsing fails."""
+
+    pass
+
+
+class EncodingError(mARCHError):
+    """Raised when encoding/decoding operations fail."""
+
+    pass
+
+
+class ValidationError(mARCHError):
+    """Raised when data validation fails."""
+
+    pass
+
+
+class SanitizationError(mARCHError):
+    """Raised when data sanitization fails."""
+
+    pass

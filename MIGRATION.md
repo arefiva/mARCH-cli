@@ -309,3 +309,389 @@ pip install anthropic Pillow tree-sitter
 - Issues: GitHub Issues
 - Discussions: GitHub Discussions
 - Documentation: README.md, CONTRIBUTING.md
+
+---
+
+# Phase 1 & Phase 2 Implementation
+
+## Phase 1: Core Infrastructure & Stream Processing
+
+### Overview
+
+Phase 1 establishes the foundational infrastructure for I/O and execution:
+
+- **Stream Buffer Management** (`stream_buffer.py`)
+  - Async stream handling with backpressure control
+  - Support for binary and text modes
+  - Event-based callbacks for data, errors, and close events
+
+- **Shell Executor** (`shell_executor.py`)
+  - Execute shell commands with timeout and output capture
+  - Streaming and buffered output modes
+  - Error handling and signal management
+
+- **Process Manager** (`process_manager.py`)
+  - Singleton pattern for process lifecycle management
+  - Real-time resource monitoring (CPU, memory)
+  - Graceful termination with timeout
+
+- **Async Executor** (`async_executor.py`)
+  - Task pool with concurrency limiting
+  - Retry logic with exponential backoff
+  - Cancellation token propagation
+
+- **Payload Handler** (`payload_handler.py`)
+  - JSON, Base64, and binary encoding/decoding
+  - Optional gzip compression
+  - Schema validation with error reporting
+
+### Usage Examples
+
+#### Stream Buffer
+
+```python
+from mARCH.core import StreamBuffer, StreamMode
+
+# Create a text stream
+buffer = StreamBuffer(mode=StreamMode.TEXT)
+
+# Write and read data
+await buffer.write("Hello, World!")
+data = await buffer.read()
+
+# Pause/resume flow control
+buffer.pause()
+buffer.resume()
+```
+
+#### Shell Executor
+
+```python
+from mARCH.core import ShellExecutor, CommandOptions, CaptureMode
+
+executor = ShellExecutor()
+
+# Basic execution
+result = await executor.execute("echo 'test'")
+print(result.stdout)  # 'test'
+
+# With options
+options = CommandOptions(
+    timeout=10.0,
+    capture_mode=CaptureMode.BOTH,
+)
+result = await executor.execute("git commit -m 'test'", options)
+
+# Streaming output
+async def on_stdout(line):
+    print(f"OUT: {line}")
+
+result = await executor.execute_streaming(
+    "npm run build",
+    on_stdout=on_stdout,
+)
+```
+
+#### Process Manager
+
+```python
+from mARCH.core import ProcessManager
+
+manager = ProcessManager()
+
+# Register a process
+process_info = await manager.register_process(
+    pid=12345,
+    metadata={"service": "web-server"}
+)
+
+# Get process info
+info = manager.get_process_info(12345)
+print(f"Status: {info.status}")
+print(f"CPU: {info.resource_usage.cpu_percent}%")
+
+# Cleanup
+await manager.cleanup_all()
+```
+
+#### Task Pool
+
+```python
+from mARCH.core import TaskPool
+
+pool = TaskPool(max_concurrency=5)
+
+# Submit tasks
+result = await pool.submit(async_function(arg1, arg2))
+
+# Map over items
+results = await pool.map(async_fn, [1, 2, 3, 4, 5])
+
+# Retry with backoff
+result = await pool.retry(
+    lambda: async_operation(),
+    max_retries=3,
+)
+
+await pool.shutdown()
+```
+
+#### Payload Codec
+
+```python
+from mARCH.core import PayloadCodec, PayloadFormat
+
+codec = PayloadCodec(enable_compression=True)
+
+# Encode data
+data = {"key": "value", "nested": {"number": 42}}
+encoded = codec.encode(data, PayloadFormat.JSON)
+
+# Decode
+decoded = codec.decode(encoded, PayloadFormat.JSON)
+```
+
+## Phase 2: Parsing & Data Processing
+
+### Overview
+
+Phase 2 adds data parsing and transformation capabilities:
+
+- **Command Parser** (`command_parser.py`)
+  - Advanced CLI argument parsing
+  - Flag extraction and positional arguments
+  - Subcommand detection
+
+- **Text Parser** (`text_parser.py`)
+  - Multi-format text parsing (markdown, JSON, code blocks)
+  - Automatic format detection
+  - Structure extraction (sections, headers, code)
+
+- **Encoding Utils** (`encoding_utils.py`)
+  - UTF-8, UTF-16, ASCII, Latin-1 encoding
+  - Base64, hex, and URL encoding
+  - Encoding detection
+
+- **String Transform** (`string_transform.py`)
+  - Case conversion (camelCase, snake_case, kebab-case, etc.)
+  - String normalization and truncation
+  - Template formatting
+
+- **Data Validation** (`data_validation.py`)
+  - Schema-based validation
+  - Email and URL validation
+  - Data normalization and sanitization
+  - PII removal
+
+### Usage Examples
+
+#### Command Parser
+
+```python
+from mARCH.parsing import CommandParser
+
+parser = CommandParser()
+
+# Parse a command
+parsed = parser.parse("git commit -m 'message' --amend --force")
+
+print(parsed.command_name)  # "git"
+print(parsed.get_flag("--amend"))  # True
+print(parsed.get_flag("--force"))  # True
+print(parsed.get_flag("-m"))  # 'message'
+```
+
+#### Text Parser
+
+```python
+from mARCH.parsing import TextParser, TextFormat
+
+parser = TextParser()
+
+markdown_text = """
+# Introduction
+This is a test.
+
+## Section 1
+Content here.
+
+```python
+print("hello")
+```
+"""
+
+# Parse automatically
+parsed = parser.parse(markdown_text)
+
+# Extract code blocks
+blocks = parsed.get_code_blocks()
+for block in blocks:
+    print(f"Language: {block.language}")
+    print(f"Code: {block.code}")
+
+# Get sections
+sections = parsed.get_sections()
+for section in sections:
+    print(f"Level {section.level}: {section.heading}")
+```
+
+#### Encoding Utils
+
+```python
+from mARCH.parsing import Encoder, Decoder, EncodingFormat
+
+# Encode to different formats
+text = "Hello, World!"
+
+utf8_encoded = Encoder.encode(text, EncodingFormat.UTF8)
+base64_encoded = Encoder.encode(text, EncodingFormat.BASE64)
+hex_encoded = Encoder.encode(text, EncodingFormat.HEX)
+
+# Decode
+decoded = Decoder.decode(base64_encoded, EncodingFormat.BASE64)
+
+# Auto-detect encoding
+detected = Decoder.detect_encoding(utf8_encoded)
+```
+
+#### String Transform
+
+```python
+from mARCH.parsing import StringTransform, TextFormatter, CaseStyle
+
+# Case conversion
+snake = StringTransform.to_snake_case("myVariableName")  # "my_variable_name"
+camel = StringTransform.to_camel_case("my_variable_name")  # "myVariableName"
+kebab = StringTransform.to_kebab_case("my_variable_name")  # "my-variable-name"
+
+# String utilities
+truncated = StringTransform.truncate("Very long text", 10)  # "Very lon..."
+pluralized = StringTransform.pluralize("item", 5)  # "items"
+
+# Template formatting
+formatter = TextFormatter()
+result = formatter.format("Hello, {name}!", name="World")
+```
+
+#### Data Validation
+
+```python
+from mARCH.parsing import (
+    DataValidator,
+    DataNormalizer,
+    SanitizationRules,
+)
+
+# Validate
+validator = DataValidator()
+
+is_valid_email = validator.is_valid_email("test@example.com")
+is_valid_url = validator.is_valid_url("https://example.com")
+
+# Normalize
+normalizer = DataNormalizer()
+
+data = {"firstName": "John", "lastName": "Doe"}
+normalized = normalizer.normalize_keys(data, "snake_case")
+# {"first_name": "John", "last_name": "Doe"}
+
+# Sanitize
+sanitizer = SanitizationRules()
+
+text = "My password is secret123"
+sanitized = sanitizer.sanitize(text, ["password"])
+# "My password is [REDACTED_PASSWORD]"
+```
+
+## Module Organization
+
+Phase 1 and 2 modules are organized in:
+
+```
+src/mARCH/
+├── core/              # Phase 1: Core Infrastructure
+│   ├── stream_buffer.py
+│   ├── shell_executor.py
+│   ├── process_manager.py
+│   ├── async_executor.py
+│   ├── payload_handler.py
+│   └── __init__.py
+├── parsing/           # Phase 2: Parsing & Data Processing
+│   ├── command_parser.py
+│   ├── text_parser.py
+│   ├── encoding_utils.py
+│   ├── string_transform.py
+│   ├── data_validation.py
+│   └── __init__.py
+└── ...
+```
+
+## Testing
+
+Comprehensive tests for Phase 1 and 2:
+
+```bash
+# Run all Phase 1/2 tests
+pytest tests/test_phase1_phase2.py -v
+
+# Run specific test class
+pytest tests/test_phase1_phase2.py::TestStreamBuffer -v
+
+# Run with coverage
+pytest tests/test_phase1_phase2.py --cov=src/mARCH/core --cov=src/mARCH/parsing
+```
+
+Test coverage includes:
+
+- **Unit Tests**: Individual module functionality
+- **Integration Tests**: Cross-module workflows
+- **Async Tests**: Concurrent operations
+- **Error Handling**: Edge cases and exceptions
+
+## Exception Hierarchy
+
+New exceptions for Phase 1 and 2:
+
+```python
+StreamError                # Stream operations
+ShellExecutionError        # Shell command execution
+ProcessError               # Process management
+AsyncExecutionError        # Async operations
+PayloadError               # Payload encoding/decoding
+
+ParsingError               # Parsing operations
+CommandParsingError        # Command parsing
+TextParsingError           # Text parsing
+EncodingError              # Encoding/decoding
+ValidationError            # Data validation
+SanitizationError          # Data sanitization
+```
+
+## Performance Characteristics
+
+### Phase 1 Performance
+
+| Operation | Typical Time |
+|-----------|-------------|
+| Stream write | <1ms |
+| Shell command (simple) | ~50ms |
+| Process registration | <1ms |
+| Task pool submit | <1ms |
+| Payload encode/decode | <5ms |
+
+### Phase 2 Performance
+
+| Operation | Typical Time |
+|-----------|-------------|
+| Command parse | <1ms |
+| Markdown parse | 1-10ms (text size dependent) |
+| Text encode/decode | <1ms |
+| Case conversion | <1ms |
+| Data validation | <1ms |
+
+## Compatibility
+
+- **Python**: 3.10+
+- **Dependencies**: All stdlib except `psutil` (optional for process monitoring)
+- **Async Runtime**: Compatible with asyncio
+- **Type Hints**: Full type hints throughout

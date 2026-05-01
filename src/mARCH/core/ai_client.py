@@ -69,6 +69,7 @@ class ClaudeAIModel(AIModel):
         messages: list[dict[str, str]],
         max_tokens: int = 2048,
         temperature: float = 0.7,
+        system: str | None = None,
     ) -> str:
         """Get completion from Claude."""
         try:
@@ -78,12 +79,21 @@ class ClaudeAIModel(AIModel):
 
         client = anthropic.Anthropic(api_key=self.api_key)
 
-        response = client.messages.create(
-            model=self.model_name,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            messages=messages,  # type: ignore[arg-type]
-        )
+        # Filter out system messages from the messages array
+        filtered_messages = [m for m in messages if m.get("role") != "system"]
+
+        create_kwargs = {
+            "model": self.model_name,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": filtered_messages,  # type: ignore[arg-type]
+        }
+
+        # Add system parameter if provided
+        if system:
+            create_kwargs["system"] = system
+
+        response = client.messages.create(**create_kwargs)
 
         # Handle response content properly - TextBlock has .text attribute
         if response.content and len(response.content) > 0:
@@ -97,6 +107,7 @@ class ClaudeAIModel(AIModel):
         messages: list[dict[str, str]],
         max_tokens: int = 2048,
         temperature: float = 0.7,
+        system: str | None = None,
     ) -> Generator[str, None, None]:
         """Stream completion from Claude."""
         try:
@@ -106,12 +117,21 @@ class ClaudeAIModel(AIModel):
 
         client = anthropic.Anthropic(api_key=self.api_key)
 
-        with client.messages.stream(
-            model=self.model_name,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            messages=messages,  # type: ignore[arg-type]
-        ) as stream:
+        # Filter out system messages from the messages array
+        filtered_messages = [m for m in messages if m.get("role") != "system"]
+
+        stream_kwargs = {
+            "model": self.model_name,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": filtered_messages,  # type: ignore[arg-type]
+        }
+
+        # Add system parameter if provided
+        if system:
+            stream_kwargs["system"] = system
+
+        with client.messages.stream(**stream_kwargs) as stream:
             for text in stream.text_stream:
                 yield text
 
@@ -163,7 +183,14 @@ class ConversationClient:
         temp = temperature or self.temperature
         tokens = max_tokens or self.max_tokens
 
-        return self.model.complete(messages, max_tokens=tokens, temperature=temp)
+        # Extract system message if present
+        system = None
+        for msg in messages:
+            if msg.get("role") == "system":
+                system = msg.get("content")
+                break
+
+        return self.model.complete(messages, max_tokens=tokens, temperature=temp, system=system)
 
     def stream_chat(
         self,
@@ -175,8 +202,15 @@ class ConversationClient:
         temp = temperature or self.temperature
         tokens = max_tokens or self.max_tokens
 
+        # Extract system message if present
+        system = None
+        for msg in messages:
+            if msg.get("role") == "system":
+                system = msg.get("content")
+                break
+
         yield from self.model.stream_complete(
-            messages, max_tokens=tokens, temperature=temp
+            messages, max_tokens=tokens, temperature=temp, system=system
         )
 
     def set_temperature(self, temperature: float) -> None:

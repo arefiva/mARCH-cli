@@ -140,7 +140,7 @@ class AIModelFactory:
     """Factory for creating AI models."""
 
     AVAILABLE_MODELS = {
-        "claude-opus-4-1": "Claude Opus 4.1",
+        "claude-haiku-4-5": "Claude Haiku 4.5",
     }
 
     @staticmethod
@@ -165,7 +165,7 @@ class ConversationClient:
 
     def __init__(
         self,
-        model_name: str = "claude-opus-4-1",
+        model_name: str = "claude-haiku-4-5",
         api_key: str | None = None,
     ):
         """Initialize conversation client."""

@@ -37,10 +37,10 @@ class TestSlashCommandParser:
     def test_parse_command_with_args(self):
         """Test parsing command with arguments."""
         parser = SlashCommandParser()
-        result = parser.parse("/model claude-opus-4-1")
+        result = parser.parse("/model claude-haiku-4-5")
         assert result is not None
         assert result.command_type == SlashCommandType.MODEL
-        assert "claude-opus-4-1" in result.args
+        assert "claude-haiku-4-5" in result.args
 
     def test_parse_non_slash_input(self):
         """Test non-slash input returns None."""
@@ -103,7 +103,7 @@ class TestAppContext:
     def test_app_context_model(self):
         """Test app context model property."""
         ctx = AppContext()
-        assert ctx.current_model == "claude-opus-4-1"
+        assert ctx.current_model == "claude-haiku-4-5"
 
     def test_app_context_experimental(self):
         """Test app context experimental mode."""
@@ -124,11 +124,11 @@ class TestParsedCommand:
         """Test ParsedCommand creation."""
         cmd = ParsedCommand(
             command_type=SlashCommandType.MODEL,
-            args=["claude-opus-4-1"],
+            args=["claude-haiku-4-5"],
             raw="/model claude-sonnet-4.5",
         )
         assert cmd.command_type == SlashCommandType.MODEL
-        assert "claude-opus-4-1" in cmd.args
+        assert "claude-haiku-4-5" in cmd.args
 
     def test_parsed_command_str(self):
         """Test ParsedCommand string representation."""

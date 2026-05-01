@@ -32,7 +32,7 @@ class AppSettings(BaseSettings):
     anthropic_api_key: str | None = Field(default=None)
 
     # AI Model
-    model: str = Field(default="claude-opus-4-1")
+    model: str = Field(default="claude-haiku-4-5")
 
     # Feature Flags
     experimental: bool = Field(default=False)

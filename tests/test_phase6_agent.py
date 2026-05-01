@@ -253,13 +253,13 @@ class TestAIModelFactory:
         """Test listing available models."""
         models = AIModelFactory.list_available_models()
         assert len(models) > 0
-        assert "claude-opus-4-1" in models
+        assert "claude-haiku-4-5" in models
 
     def test_create_claude_model(self):
         """Test creating Claude model."""
-        model = AIModelFactory.create_model("claude-opus-4-1")
+        model = AIModelFactory.create_model("claude-haiku-4-5")
         assert model is not None
-        assert model.get_model_name() == "claude-opus-4-1"
+        assert model.get_model_name() == "claude-haiku-4-5"
 
     def test_unknown_model_raises_error(self):
         """Test unknown model raises error."""
@@ -272,7 +272,7 @@ class TestConversationClient:
 
     def test_client_creation(self):
         """Test creating conversation client."""
-        client = ConversationClient(model_name="claude-opus-4-1")
+        client = ConversationClient(model_name="claude-haiku-4-5")
         assert client is not None
 
     def test_temperature_management(self):

@@ -42,6 +42,29 @@ class TestREPL:
         sig = inspect.signature(repl.get_input)
         assert "mode" in sig.parameters
 
+    def test_repl_with_mode_manager(self):
+        """Test REPL can be initialized with mode manager."""
+        mgr = ModeManager()
+        repl = MARCH_REPL(mode_manager=mgr)
+        assert repl.mode_manager == mgr
+
+    def test_sync_repl_with_mode_manager(self):
+        """Test SyncREPL accepts mode manager."""
+        from mARCH.cli.repl import SyncREPL
+
+        mgr = ModeManager()
+        sync_repl = SyncREPL(mode_manager=mgr)
+        assert sync_repl.mode_manager == mgr
+
+    def test_mode_change_signal_detection(self):
+        """Test mode change signal is properly formatted."""
+        mode_signal = "__MODE_CHANGE__autopilot"
+        assert mode_signal.startswith("__MODE_CHANGE__")
+        mode_value = mode_signal.split("__MODE_CHANGE__")[1]
+        assert mode_value == "autopilot"
+        # Verify it's a valid mode
+        assert ExecutionMode(mode_value) == ExecutionMode.AUTOPILOT
+
 
 class TestPlanModeDetection:
     """Test plan mode detection."""
@@ -173,6 +196,48 @@ async def test_plan_generator_generates_plan():
     assert "tasks" in plan
     assert "estimated_effort" in plan
     assert "success_criteria" in plan
+
+
+class TestModeChangeHandling:
+    """Test mode change signal handling."""
+
+    def test_mode_change_signal_parsing(self):
+        """Test parsing mode change signal."""
+        signal = "__MODE_CHANGE__autopilot"
+        assert signal.startswith("__MODE_CHANGE__")
+        mode_value = signal.split("__MODE_CHANGE__")[1]
+        assert ExecutionMode(mode_value) == ExecutionMode.AUTOPILOT
+
+    def test_mode_change_through_cycle(self):
+        """Test mode cycles correctly through shift+tab"""
+        mgr = ModeManager(ExecutionMode.INTERACTIVE)
+        # Simulate what happens on Shift+Tab
+        assert mgr.current_mode == ExecutionMode.INTERACTIVE
+
+        # First Shift+Tab -> Plan
+        mgr.cycle_mode()
+        assert mgr.current_mode == ExecutionMode.PLAN
+
+        # Second Shift+Tab -> Autopilot
+        mgr.cycle_mode()
+        assert mgr.current_mode == ExecutionMode.AUTOPILOT
+
+        # Third Shift+Tab -> back to Interactive
+        mgr.cycle_mode()
+        assert mgr.current_mode == ExecutionMode.INTERACTIVE
+
+    def test_mode_change_to_autopilot_via_signal(self):
+        """Test changing mode via parsed signal."""
+        mgr = ModeManager(ExecutionMode.INTERACTIVE)
+        signal = "__MODE_CHANGE__autopilot"
+
+        # Parse signal
+        mode_value = signal.split("__MODE_CHANGE__")[1]
+        new_mode = ExecutionMode(mode_value)
+
+        # Apply change
+        mgr.set_mode(new_mode)
+        assert mgr.current_mode == ExecutionMode.AUTOPILOT
 
 
 class TestAppContextModes:

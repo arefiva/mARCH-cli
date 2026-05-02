@@ -519,7 +519,7 @@ def main(
     console.print()
 
     # Interactive loop
-    repl = get_repl()
+    repl = get_repl(mode_manager=ctx.mode_manager)
     try:
         while True:
             try:
@@ -530,6 +530,16 @@ def main(
                 user_input = repl.get_input(mode=current_mode)
 
                 if not user_input:
+                    continue
+
+                # Check for mode change signal (Shift+Tab)
+                if user_input.startswith("__MODE_CHANGE__"):
+                    mode_value = user_input.split("__MODE_CHANGE__")[1]
+                    new_mode = ExecutionMode(mode_value)
+                    ctx.mode_manager.set_mode(new_mode)
+                    console.print(
+                        f"[green]✓[/green] Mode changed to: [bold]{mode_value}[/bold]"
+                    )
                     continue
 
                 # Check for exit commands

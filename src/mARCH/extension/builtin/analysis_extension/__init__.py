@@ -6,10 +6,10 @@ and detecting gaps in content.
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from mARCH.analysis.correlation_analyzer import CorrelationAnalyzer
-from mARCH.analysis.file_aggregator import aggregate_files_sync
+from mARCH.analysis.file_aggregator import FileAggregator
 from mARCH.analysis.pattern_extractor import PatternExtractor
 from mARCH.extension.lifecycle import ExtensionContext
 from mARCH.extension.tool import ToolExtension
@@ -141,9 +141,8 @@ class AnalysisExtension(ToolExtension):
                     "file_count": 0,
                 }
 
-            summaries = aggregate_files_sync(
-                path, pattern=pattern, max_files=max_files
-            )
+            aggregator = FileAggregator(max_files=max_files)
+            summaries = await aggregator.aggregate_files(path, pattern=pattern)
 
             return {
                 "success": True,
@@ -194,7 +193,8 @@ class AnalysisExtension(ToolExtension):
                 }
 
             # Aggregate files
-            summaries = aggregate_files_sync(path, pattern=pattern)
+            aggregator = FileAggregator()
+            summaries = await aggregator.aggregate_files(path, pattern=pattern)
 
             if not summaries:
                 return {
@@ -256,7 +256,8 @@ class AnalysisExtension(ToolExtension):
                 }
 
             # Aggregate files
-            summaries = aggregate_files_sync(path, pattern=pattern)
+            aggregator = FileAggregator()
+            summaries = await aggregator.aggregate_files(path, pattern=pattern)
 
             if not summaries:
                 return {
@@ -313,7 +314,8 @@ class AnalysisExtension(ToolExtension):
                 }
 
             # Aggregate files
-            summaries = aggregate_files_sync(path, pattern=pattern)
+            aggregator = FileAggregator()
+            summaries = await aggregator.aggregate_files(path, pattern=pattern)
 
             if not summaries:
                 return {
@@ -323,7 +325,7 @@ class AnalysisExtension(ToolExtension):
 
             # Extract themes
             extractor = PatternExtractor(
-                min_frequency=2, min_confidence=0.1
+                min_frequency=1, min_confidence=0.1
             )
             themes = extractor.extract_themes(summaries)
 

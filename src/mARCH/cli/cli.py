@@ -36,6 +36,9 @@ class AppContext:
 
     def __init__(self) -> None:
         """Initialize application context."""
+        import os
+        from pathlib import Path
+
         self.config_manager = get_config_manager()
         self.slash_parser = SlashCommandParser()
         self.github_integration = GitHubIntegration()
@@ -43,8 +46,15 @@ class AppContext:
         self.current_model = self.config_manager.get_model()
         self.show_banner = self.config_manager.settings.show_banner
         self.agent = Agent(name="mARCH", mode=ConversationMode.INTERACTIVE)
+
+        # Set up agent context with current working directory
+        # This gives the agent default read access to files in CWD
+        self.agent.context.current_directory = str(Path.cwd())
+
         self.ai_client: ConversationClient | None = None
         self._initialize_ai_client()
+
+        logger.debug(f"CLI initialized with CWD: {self.agent.context.current_directory}")
 
     def _initialize_ai_client(self) -> None:
         """Initialize the AI client."""

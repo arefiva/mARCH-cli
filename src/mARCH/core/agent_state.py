@@ -59,12 +59,64 @@ class AgentContext:
     project_type: str | None = None
     git_branch: str | None = None
     custom_context: dict[str, Any] = field(default_factory=dict)
+    # Default file permissions: read access to CWD and its subdirectories
+    file_permissions: dict[str, Any] = field(
+        default_factory=lambda: {
+            "file_read": ["**"],  # Read access to all files under CWD
+            "file_write": [],  # No write access by default
+            "network_read": [],  # No network access by default
+        }
+    )
 
     def update_from_github_context(self, github_context: dict) -> None:
         """Update context from GitHub integration."""
         if github_context:
             self.current_directory = github_context.get("repo_root", ".")
             self.git_branch = github_context.get("branch")
+
+    def can_read_file(self, path: str) -> bool:
+        """Check if agent can read a file.
+
+        Args:
+            path: File path (relative to current_directory or absolute)
+
+        Returns:
+            True if file read is allowed
+        """
+        from pathlib import Path
+
+        # Get absolute path
+        abs_path = Path(path).resolve()
+        cwd = Path(self.current_directory).resolve()
+
+        # Always allow reading within CWD
+        try:
+            abs_path.relative_to(cwd)
+            return True
+        except ValueError:
+            # Path is outside CWD
+            return False
+
+    def can_write_file(self, path: str) -> bool:
+        """Check if agent can write a file.
+
+        Args:
+            path: File path
+
+        Returns:
+            True if file write is allowed
+        """
+        # Default: no write access for safety
+        return False
+
+    def has_network_access(self) -> bool:
+        """Check if agent has network access.
+
+        Returns:
+            True if network access is allowed
+        """
+        # Default: no network access
+        return False
 
 
 class ConversationHistory:
@@ -242,6 +294,37 @@ class Agent:
 
     def _get_system_prompt(self) -> str:
         """Generate system prompt for agent."""
+        import os
+        from pathlib import Path
+
+        cwd = Path(self.context.current_directory).expanduser().resolve()
+        available_files = []
+
+        # Get available files in CWD (up to 100 most recent)
+        try:
+            if cwd.exists():
+                all_items = sorted(
+                    cwd.iterdir(),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True
+                )[:100]
+                available_files = [
+                    (item.name, "dir" if item.is_dir() else "file")
+                    for item in all_items
+                ]
+        except (OSError, PermissionError):
+            pass
+
+        files_section = ""
+        if available_files:
+            files_list = "\n".join(
+                f"  - {name} ({ftype})"
+                for name, ftype in available_files[:20]
+            )
+            files_section = f"\nAvailable files in current directory:\n{files_list}"
+            if len(available_files) > 20:
+                files_section += f"\n  ... and {len(available_files) - 20} more"
+
         return f"""You are {self.name}, an AI-powered coding assistant.
 You help developers with code analysis, debugging, and implementation.
 
@@ -249,6 +332,9 @@ Current context:
 - Directory: {self.context.current_directory}
 - Language: {self.context.language or "Not specified"}
 - Branch: {self.context.git_branch or "Not specified"}
+
+You have read access to files in the current directory and its subdirectories.
+When asked to find or analyze files, you can access them.{files_section}
 
 Be concise, helpful, and provide code examples when appropriate."""
 

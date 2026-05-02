@@ -20,6 +20,7 @@ from mARCH.github.github_integration import GitHubIntegration
 from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType
 from mARCH.core.ai_client import ConversationClient
 from mARCH.core.agent_state import Agent, ConversationMode
+from mARCH.cli.repl import get_repl
 
 logger = logging_config.get_logger(__name__)
 console = Console()
@@ -449,10 +450,11 @@ def main(
     console.print()
 
     # Interactive loop
+    repl = get_repl()
     try:
         while True:
             try:
-                user_input = console.input("[cyan]march> [/cyan]").strip()
+                user_input = repl.get_input()
 
                 if not user_input:
                     continue

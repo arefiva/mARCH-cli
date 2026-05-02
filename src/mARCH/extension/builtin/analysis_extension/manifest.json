@@ -1,0 +1,9 @@
+{
+  "name": "analysis",
+  "version": "0.1.0",
+  "display_name": "Content Analysis Extension",
+  "description": "Provides multi-file content analysis, theme extraction, and gap detection",
+  "author": "mARCH",
+  "type": "tool",
+  "entry_point": "mARCH.extension.builtin.analysis_extension:AnalysisExtension"
+}

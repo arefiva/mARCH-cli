@@ -1,0 +1,13 @@
+name: hello-command
+version: 1.0.0
+display_name: Hello Command Extension
+description: Simple example CLI command extension that says hello
+author: mARCH
+license: MIT
+type: cli_command
+entry_point: extension.py
+sandbox_level: file_restricted
+permissions:
+  - type: file_read
+    resource: ~/.copilot/**
+    description: Read configuration files

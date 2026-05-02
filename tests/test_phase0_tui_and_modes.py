@@ -5,8 +5,9 @@ import pytest
 from mARCH.cli.repl import MARCH_REPL, get_repl
 from mARCH.core.plan_mode import PlanModeDetector
 from mARCH.core.execution_mode import ExecutionMode, ModeManager
-from mARCH.cli.plan_display import PlanApprovalUI
+from mARCH.cli.plan_display import PlanApprovalUI, PlanResultDisplay
 from mARCH.core.plan_generator import PlanGenerator
+from mARCH.cli.cli import AppContext
 
 
 class TestREPL:
@@ -23,6 +24,23 @@ class TestREPL:
         repl1 = get_repl()
         repl2 = get_repl()
         assert repl1 is repl2
+
+    def test_repl_get_input_with_mode_interactive(self):
+        """Test REPL prompt includes mode when provided."""
+        repl = MARCH_REPL()
+        # Note: Can't easily test interactive input, but can verify method exists
+        assert hasattr(repl, "get_input")
+        assert callable(repl.get_input)
+
+    def test_repl_get_input_accepts_mode_parameter(self):
+        """Test get_input accepts ExecutionMode parameter."""
+        repl = MARCH_REPL()
+        # Just verify the method signature accepts mode
+        # (can't test actual input without mocking stdin)
+        import inspect
+
+        sig = inspect.signature(repl.get_input)
+        assert "mode" in sig.parameters
 
 
 class TestPlanModeDetection:
@@ -108,6 +126,27 @@ class TestPlanDisplay:
         # Should not raise
         PlanApprovalUI.display_plan(plan)
 
+    def test_result_display_creation(self):
+        """Test PlanResultDisplay exists and is callable."""
+        display = PlanResultDisplay()
+        assert display is not None
+
+    def test_result_display_with_results(self):
+        """Test displaying execution results."""
+        results = {
+            "status": "complete",
+            "mode": "interactive",
+            "tasks": [
+                {
+                    "id": "task1",
+                    "description": "Test task",
+                    "status": "completed",
+                },
+            ],
+        }
+        # Should not raise
+        PlanResultDisplay.display_results(results)
+
 
 @pytest.mark.asyncio
 async def test_plan_generator_initialization():
@@ -134,3 +173,23 @@ async def test_plan_generator_generates_plan():
     assert "tasks" in plan
     assert "estimated_effort" in plan
     assert "success_criteria" in plan
+
+
+class TestAppContextModes:
+    """Test AppContext integration with modes."""
+
+    def test_app_context_has_mode_manager(self):
+        """Test AppContext initializes with mode manager."""
+        ctx = AppContext()
+        assert hasattr(ctx, "mode_manager")
+        assert ctx.mode_manager is not None
+
+    def test_app_context_mode_manager_is_correct_type(self):
+        """Test AppContext mode manager is correct type."""
+        ctx = AppContext()
+        assert isinstance(ctx.mode_manager, ModeManager)
+
+    def test_app_context_mode_manager_starts_interactive(self):
+        """Test AppContext mode manager starts in interactive mode."""
+        ctx = AppContext()
+        assert ctx.mode_manager.current_mode == ExecutionMode.INTERACTIVE

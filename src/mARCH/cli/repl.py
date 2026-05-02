@@ -12,6 +12,8 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.formatted_text import HTML
 from rich.console import Console
 
+from mARCH.core.execution_mode import ExecutionMode
+
 console = Console()
 
 
@@ -29,8 +31,8 @@ class MARCH_REPL:
             enable_history_search=True,  # Enable Ctrl+R history search
         )
 
-    def get_input(self) -> str:
-        """Get user input with readline support.
+    def get_input(self, mode: ExecutionMode = ExecutionMode.INTERACTIVE) -> str:
+        """Get user input with readline support and mode indicator.
 
         Supports:
         - Arrow keys for cursor navigation
@@ -38,13 +40,32 @@ class MARCH_REPL:
         - Up/Down for history navigation
         - Ctrl+R for history search
         - Home/End keys
+        - Mode indicator in prompt
+
+        Args:
+            mode: Current ExecutionMode to display in prompt
 
         Returns:
             User input string, stripped of whitespace
         """
         try:
-            # Use HTML formatting for the prompt (matches original style)
-            prompt_text = HTML("<ansi>march<ansiyellow>></ansiyellow></ansi> ")
+            # Build prompt with mode indicator
+            mode_colors = {
+                ExecutionMode.INTERACTIVE: "cyan",
+                ExecutionMode.PLAN: "yellow",
+                ExecutionMode.AUTOPILOT: "green",
+                ExecutionMode.AUTOPILOT_FLEET: "magenta",
+                ExecutionMode.SHELL: "red",
+            }
+
+            mode_name = mode.value
+            mode_color = mode_colors.get(mode, "white")
+
+            # Use HTML for rich formatting (matches original style)
+            prompt_text = HTML(
+                f"<ansi>march<ansi{mode_color}>[{mode_name}]</ansi{mode_color}></ansi>"
+                f"<ansi>></ansi> "
+            )
 
             user_input = self.session.prompt(prompt_text)
             return user_input.strip()

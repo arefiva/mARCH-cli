@@ -4,6 +4,7 @@ Main CLI entry point using Typer framework.
 Provides command-line interface with argument parsing, modes, and slash commands.
 """
 
+import asyncio
 import logging
 import sys
 from typing import Generator
@@ -21,6 +22,11 @@ from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType
 from mARCH.core.ai_client import ConversationClient
 from mARCH.core.agent_state import Agent, ConversationMode
 from mARCH.cli.repl import get_repl
+from mARCH.core.execution_mode import ExecutionMode, ModeManager
+from mARCH.core.plan_mode import PlanModeDetector
+from mARCH.core.plan_generator import PlanGenerator
+from mARCH.cli.plan_display import PlanApprovalUI, PlanResultDisplay
+from mARCH.core.autopilot_executor import AutopilotExecutor
 
 logger = logging_config.get_logger(__name__)
 console = Console()
@@ -53,6 +59,7 @@ class AppContext:
         self.agent.context.current_directory = str(Path.cwd())
 
         self.ai_client: ConversationClient | None = None
+        self.mode_manager = ModeManager(initial_mode=ExecutionMode.INTERACTIVE)
         self._initialize_ai_client()
 
         logger.debug(f"CLI initialized with CWD: {self.agent.context.current_directory}")
@@ -347,6 +354,68 @@ def handle_setup_command(ctx: AppContext, args: list[str]) -> None:
         console.print("  /setup anthropic   - Configure Anthropic API key")
 
 
+async def handle_plan_mode(
+    ctx: AppContext, user_input: str, mode_manager: ModeManager
+) -> None:
+    """Handle [[PLAN]] prefix - generate and execute plan.
+
+    Flow:
+    1. Extract content after [[PLAN]]
+    2. Generate plan
+    3. Display plan
+    4. Get user action choice
+    5. Execute based on choice
+
+    Args:
+        ctx: Application context
+        user_input: User input with [[PLAN]] prefix
+        mode_manager: Mode manager for mode tracking
+    """
+    # Extract request content after [[PLAN]]
+    request = PlanModeDetector.extract_content(user_input)
+
+    if not request:
+        console.print("[yellow]⚠️  No request provided after [[PLAN]][/yellow]")
+        return
+
+    try:
+        # Generate plan
+        console.print("[dim]Generating plan...[/dim]")
+        plan_gen = PlanGenerator(ctx.agent)
+        plan = await plan_gen.generate_plan(request)
+
+        # Display plan
+        PlanApprovalUI.display_plan(plan)
+
+        # Get user action selection
+        action = PlanApprovalUI.get_approval()
+
+        if action == "exit_only":
+            console.print("[yellow]Plan not implemented[/yellow]")
+            return
+
+        # Convert action to ExecutionMode
+        action_to_mode = {
+            "interactive": ExecutionMode.INTERACTIVE,
+            "autopilot": ExecutionMode.AUTOPILOT,
+            "autopilot_fleet": ExecutionMode.AUTOPILOT_FLEET,
+        }
+        execution_mode = action_to_mode.get(action, ExecutionMode.INTERACTIVE)
+
+        # Execute plan
+        console.print()
+        console.print("[bold cyan]Executing plan...[/bold cyan]")
+        executor = AutopilotExecutor()
+        results = await executor.execute_plan(plan, execution_mode)
+
+        # Display results
+        PlanResultDisplay.display_results(results)
+
+    except Exception as e:
+        logger.error(f"Error in plan mode: {e}")
+        console.print(f"[red]Error generating plan: {e}[/red]")
+
+
 def handle_regular_input(ctx: AppContext, user_input: str) -> None:
     """
     Handle regular (non-slash command) user input.
@@ -454,7 +523,11 @@ def main(
     try:
         while True:
             try:
-                user_input = repl.get_input()
+                # Get current mode for prompt display
+                current_mode = ctx.mode_manager.current_mode
+
+                # Get user input with mode indicator in prompt
+                user_input = repl.get_input(mode=current_mode)
 
                 if not user_input:
                     continue
@@ -463,6 +536,11 @@ def main(
                 if user_input.lower() in ("exit", "quit", ":q", "q!"):
                     console.print("[yellow]Goodbye![/yellow]")
                     break
+
+                # Check for [[PLAN]] prefix FIRST (before slash commands)
+                if PlanModeDetector.is_plan_request(user_input):
+                    asyncio.run(handle_plan_mode(ctx, user_input, ctx.mode_manager))
+                    continue
 
                 # Handle slash commands
                 if ctx.slash_parser.is_slash_command(user_input):

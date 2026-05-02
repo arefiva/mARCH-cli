@@ -86,3 +86,55 @@ class PlanApprovalUI:
         action = choices.get(choice, "exit_only")
 
         return action
+
+
+class PlanResultDisplay:
+    """Display plan execution results."""
+
+    @staticmethod
+    def display_results(results: Dict[str, Any]) -> None:
+        """Display plan execution results with colored output.
+
+        Args:
+            results: Plan execution results dictionary
+        """
+        console.print()
+        console.print(
+            Panel.fit(
+                "[bold cyan]Plan Execution Complete[/bold cyan]",
+                border_style="green",
+            )
+        )
+
+        console.print(f"\n[bold cyan]Status:[/bold cyan] {results.get('status')}")
+        console.print(f"[bold cyan]Mode:[/bold cyan] {results.get('mode')}")
+
+        tasks = results.get("tasks", [])
+        console.print(f"\n[bold cyan]Tasks Executed:[/bold cyan] {len(tasks)}")
+
+        if tasks:
+            console.print()
+            for task in tasks:
+                status = task.get("status", "unknown")
+                status_colors = {
+                    "completed": "green",
+                    "failed": "red",
+                    "skipped": "yellow",
+                    "error": "red",
+                }
+                color = status_colors.get(status, "white")
+
+                task_id = task.get("id", "unknown")
+                task_desc = task.get("description", "")
+
+                console.print(f"  [{color}]●[/{color}] {task_id}: {task_desc}")
+
+                if task.get("stdout"):
+                    output = task.get("stdout", "")[:100]
+                    console.print(f"      [dim]Output: {output}[/dim]")
+                if task.get("error"):
+                    error = task.get("error", "")
+                    console.print(f"      [red]Error: {error}[/red]")
+
+        console.print()
+

@@ -1,116 +1,166 @@
 {
-  "project": "copilot-cli-python",
-  "branchName": "feature/review-fixes",
-  "description": "Fix 5 issues from code review: shell injection, zombie processes, deadlock, ambiguous edits, temp file leak",
-  "_source": "tasks/prd-fix-plan-mode/prd-review-fixes.md",
+  "project": "mARCH CLI",
+  "branchName": "feature/prompt-system",
+  "description": "Port rich system prompt architecture from JS Copilot CLI to Python CLI — identity, guidelines, code change rules, memory injection, context compaction, custom instructions, and mode-specific messages.",
+  "_source": "tasks/prd-prompt-system/prd.md",
   "userStories": [
     {
-      "id": "US-001",
-      "title": "Mitigate shell injection in bash executor",
-      "description": "As a platform operator, I want bash command execution to be protected against shell injection so that untrusted command strings cannot escalate to arbitrary code execution.",
+      "id": "PS-001",
+      "title": "Core system prompt builder with all static sections",
+      "description": "As a developer using mARCH CLI, I want the AI to receive a rich, structured system prompt with identity, task guidelines, code change instructions, linting/testing rules, style rules, ecosystem tools, tips, and prohibited actions sections — matching the quality of the original JS Copilot CLI.",
       "priority": 1,
-      "complexity": "complex",
-      "riskLevel": "high",
+      "complexity": "standard",
+      "riskLevel": "medium",
       "preferredModel": "claude-sonnet-4.6",
       "dependsOn": [],
-      "notes": "This is the highest-severity finding. Switching from create_subprocess_shell to create_subprocess_exec changes behaviour for commands using shell features, so a shell=True opt-in flag must be provided.",
       "implementationNotes": [
-        "Modify src/mARCH/tasks/bash_executor.py method _run_command_streaming (line 122): replace asyncio.create_subprocess_shell() with asyncio.create_subprocess_exec(*shlex.split(command))",
-        "Add 'import shlex' at the top of the file",
-        "Read an optional 'shell' boolean from task.params (default False). When True, fall back to create_subprocess_shell with a docstring warning about the security implications",
-        "Handle edge case: if shlex.split returns an empty list, raise a clear RuntimeError before spawning the subprocess",
-        "Create tests/tasks/test_bash_executor.py with unit tests covering metacharacter rejection, quoted-argument tokenisation, shell=True opt-in, and empty-command edge case"
+        "Create new module `src/mARCH/core/prompts.py` with a `PromptBuilder` class.",
+        "Add an `AgentRole` enum (TASK_AGENT, CODING_AGENT) to `prompts.py` to support role-variant identity prompts.",
+        "Implement `PromptBuilder.build_system_prompt(name, role, context, **kwargs) -> str` as the main entry point.",
+        "Implement private methods for each section: `_identity_section(name, role)`, `_task_guidelines_section()`, `_code_change_section()`, `_linting_testing_section()`, `_style_section()`, `_ecosystem_tools_section()`, `_tips_section()`, `_prohibited_actions_section()`.",
+        "Each section method returns a string. The builder concatenates them with double-newline separators.",
+        "Define all prompt text as module-level string constants (e.g., `_TASK_GUIDELINES`, `_CODE_CHANGE_INSTRUCTIONS`) for easy testing and modification.",
+        "The identity section uses f-string interpolation: for TASK_AGENT role, agentName='Task Agent' with research/analysis skills; for CODING_AGENT role, agentName='Coding Agent' with coding skills. See JS lines 1327-1331.",
+        "Update `Agent._get_system_prompt()` in `src/mARCH/core/agent_state.py` to delegate to `PromptBuilder.build_system_prompt()` instead of constructing its own string. Pass `self.name`, current directory, language, branch, and available files from the existing logic.",
+        "Add `role: AgentRole` field to `Agent.__init__()` with default `AgentRole.TASK_AGENT`.",
+        "Create test file `src/mARCH/tests/test_prompts.py` with tests: (1) builder returns non-empty string, (2) identity section includes agent name and role-specific skills, (3) each section constant is non-empty, (4) TASK_AGENT vs CODING_AGENT produce different identity text, (5) build_system_prompt includes all sections.",
+        "Files touched: `src/mARCH/core/prompts.py` (new), `src/mARCH/core/agent_state.py` (edit _get_system_prompt and __init__), `src/mARCH/core/__init__.py` (export PromptBuilder, AgentRole), `src/mARCH/tests/test_prompts.py` (new)."
       ],
       "acceptanceCriteria": [
-        "Unit test verifies that a command string with shell metacharacters (e.g., 'echo hello; rm -rf /') is NOT executed through a shell when 'shell' param is absent or false",
-        "Unit test verifies that shlex.split correctly tokenises a quoted command like 'echo \"hello world\"' into ['echo', 'hello world']",
-        "Unit test verifies that when shell=True is explicitly set in task params, create_subprocess_shell is used instead",
-        "Unit test covers edge case: empty command after shlex.split raises a clear error",
+        "A new file `src/mARCH/core/prompts.py` exists with `PromptBuilder` class and `AgentRole` enum.",
+        "`Agent._get_system_prompt()` delegates to `PromptBuilder.build_system_prompt()` and returns a string containing all 8 static sections.",
+        "The returned prompt includes role-variant identity text (different for TASK_AGENT vs CODING_AGENT).",
+        "The returned prompt includes task guidelines mentioning `<plan>` tags.",
+        "The returned prompt includes prohibited actions section with security rules.",
+        "All existing tests that call `Agent` or `get_conversation_context` continue to pass without modification.",
+        "New test file `src/mARCH/tests/test_prompts.py` has at least 5 passing tests.",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
       "passes": true
     },
     {
-      "id": "US-002",
-      "title": "Kill subprocess on timeout and clean up temp files",
-      "description": "As a platform operator, I want timed-out subprocesses to be killed immediately and overflow temp files to be cleaned up so that the system does not leak zombie processes or disk space.",
+      "id": "PS-002",
+      "title": "Environment context and custom instructions",
+      "description": "As a developer using mARCH CLI, I want the system prompt to include structured environment context (OS, git repo, available tools) and support reading custom instructions from `.github/copilot-instructions.md` so the AI understands my project conventions.",
       "priority": 2,
       "complexity": "standard",
-      "riskLevel": "medium",
-      "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [
-        "US-001"
-      ],
-      "notes": "The process handle must be accessible in the timeout handler. Consider using an instance variable or refactoring _run_command_streaming to yield the process reference before awaiting completion.",
-      "implementationNotes": [
-        "Modify src/mARCH/tasks/bash_executor.py method execute (lines 58-104): store the subprocess handle so it is accessible in the except asyncio.TimeoutError block",
-        "In the TimeoutError handler (line 89), call process.kill() then await process.wait() to reap the zombie process",
-        "Add a set _temp_files on the BashTaskExecutor instance to track paths created by _create_temp_output_file()",
-        "Add a public cleanup_temp_files() method that deletes all tracked files, handles FileNotFoundError gracefully, and clears the set",
-        "Register an atexit handler in __init__ as a safety net that calls cleanup_temp_files()",
-        "Add unit tests in tests/tasks/test_bash_executor.py covering process kill on timeout, zombie reaping, temp file cleanup idempotency, and already-deleted file handling"
-      ],
-      "acceptanceCriteria": [
-        "Unit test verifies that after a timeout, process.kill() is called on the subprocess",
-        "Unit test verifies that after a timeout, process.wait() is awaited (no zombie)",
-        "Unit test verifies that cleanup_temp_files() deletes all tracked temp files from disk",
-        "Unit test covers edge case: cleanup is idempotent \u2014 calling it twice does not raise",
-        "Unit test covers edge case: cleanup handles already-deleted files gracefully (no FileNotFoundError)",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
-      "passes": true
-    },
-    {
-      "id": "US-003",
-      "title": "Read stdout and stderr concurrently to prevent deadlock",
-      "description": "As a platform operator, I want stdout and stderr to be read concurrently so that subprocesses producing large stderr output do not deadlock.",
-      "priority": 3,
-      "complexity": "standard",
-      "riskLevel": "medium",
-      "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [
-        "US-001"
-      ],
-      "notes": "This modifies the same _run_command_streaming method touched by US-001, so it depends on that story. The overflow-to-disk path needs care when both streams write concurrently.",
-      "implementationNotes": [
-        "Modify src/mARCH/tasks/bash_executor.py method _run_command_streaming (lines 136-171): extract per-stream reading into a helper coroutine _read_stream(stream, buffer, size_tracker, label)",
-        "Use asyncio.gather() to read stdout and stderr concurrently instead of the current sequential pattern",
-        "If both streams overflow to disk, use separate temp files per stream (or an asyncio.Lock around shared file writes) to prevent data corruption from interleaved writes",
-        "Preserve the existing 100MB per-stream limit and overflow-to-disk behaviour",
-        "Add unit tests in tests/tasks/test_bash_executor.py verifying no deadlock with >64KB stderr, concurrent capture correctness, and overflow behaviour"
-      ],
-      "acceptanceCriteria": [
-        "Unit test verifies that a subprocess writing >64KB to stderr while stdout is still open does NOT deadlock (completes within 5 seconds)",
-        "Unit test verifies that stdout and stderr content are both fully captured when both streams produce output simultaneously",
-        "Unit test verifies that overflow-to-disk still works correctly when output exceeds MAX_OUTPUT_SIZE",
-        "Unit test covers edge case: subprocess that produces no output on either stream returns empty strings",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
-      "passes": true
-    },
-    {
-      "id": "US-004",
-      "title": "Reject ambiguous multi-match file edits",
-      "description": "As a developer, I want file edit operations to fail explicitly when the search string matches multiple locations so that edits are never silently applied to the wrong occurrence.",
-      "priority": 1,
-      "complexity": "trivial",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [],
-      "notes": "This is a small, isolated change in file_executor.py with no dependencies on the bash_executor stories.",
+      "dependsOn": [
+        "PS-001"
+      ],
       "implementationNotes": [
-        "Modify src/mARCH/tasks/file_executor.py method _edit_file (lines 299-310): after confirming old_str exists in content, add content.count(old_str) > 1 check that raises ValueError with the match count",
-        "Include a truncated snippet of old_str (first 50 chars) and the count in the error message for debuggability",
-        "Create tests/tasks/test_file_executor.py with unit tests covering single-match success, multi-match rejection, absent-string rejection, and substring edge case"
+        "Create `src/mARCH/core/custom_instructions.py` with a `CustomInstructionsLoader` class.",
+        "`CustomInstructionsLoader.load(repo_root: str | Path) -> str | None` reads `.github/copilot-instructions.md` from the repo root. Returns content string or None if file doesn't exist.",
+        "Add `_environment_context_section(context: AgentContext) -> str` to `PromptBuilder` in `prompts.py`. Include: current working directory, git repo root, git branch, OS (via `platform.system()`), and a note 'You do not need to make additional tool calls to verify this.'",
+        "Add `_custom_instructions_section(repo_root: str | None) -> str | None` to `PromptBuilder`. Uses `CustomInstructionsLoader.load()`. Returns None if no file found. When present, wraps content in a clear header section.",
+        "Update `PromptBuilder.build_system_prompt()` to accept optional `repo_root` kwarg and call both new sections.",
+        "Update `Agent._get_system_prompt()` to pass `repo_root` (derived from `self.context.current_directory` or git root detection).",
+        "Add tests to `src/mARCH/tests/test_prompts.py`: (1) environment section includes OS name and directory, (2) custom instructions returns None when file missing, (3) custom instructions returns content when file exists (use tmp_path fixture), (4) full prompt includes environment section.",
+        "Files touched: `src/mARCH/core/custom_instructions.py` (new), `src/mARCH/core/prompts.py` (edit), `src/mARCH/core/agent_state.py` (edit), `src/mARCH/tests/test_prompts.py` (edit)."
       ],
       "acceptanceCriteria": [
-        "Unit test verifies that editing a file where old_str appears exactly once succeeds and produces the correct output",
-        "Unit test verifies that editing a file where old_str appears 3 times raises ValueError with a message containing the count",
-        "Unit test verifies that editing a file where old_str is absent raises ValueError (existing behaviour preserved)",
-        "Unit test covers edge case: old_str that is a substring of a longer match is still counted correctly",
+        "A new file `src/mARCH/core/custom_instructions.py` exists with `CustomInstructionsLoader` class.",
+        "`PromptBuilder.build_system_prompt()` output includes an environment context section with OS and directory info.",
+        "When `.github/copilot-instructions.md` exists in the repo root, its content is included in the system prompt.",
+        "When the file does not exist, no custom instructions section appears (no error raised).",
+        "At least 3 new tests added for environment context and custom instructions.",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": true
+    },
+    {
+      "id": "PS-003",
+      "title": "Memory system prompt injection",
+      "description": "As a developer using mARCH CLI, I want stored memories from previous sessions to be injected into the system prompt with guidance on how the AI should use, verify, and refresh them.",
+      "priority": 3,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [
+        "PS-001"
+      ],
+      "implementationNotes": [
+        "Add `_memory_section(memories: list[dict] | None) -> str | None` to `PromptBuilder` in `prompts.py`.",
+        "Each memory dict has keys: `fact` (str), `subject` (str), `citations` (str). Format each as a bullet point with citation.",
+        "When `memories` is non-empty, return the JS CLI's memory preamble: explain that memories may be obsolete/incorrect, instruct to verify via citations, and instruct to re-store useful facts to retain them longer.",
+        "When `memories` is None or empty, return None (section omitted).",
+        "Update `PromptBuilder.build_system_prompt()` to accept optional `memories` kwarg.",
+        "Update `Agent._get_system_prompt()` to accept and forward a `memories` parameter (default None).",
+        "Add tests: (1) memory section returns None when memories is empty/None, (2) memory section includes preamble text when memories provided, (3) memory section includes each fact and citation, (4) full prompt omits memory section when no memories.",
+        "Files touched: `src/mARCH/core/prompts.py` (edit), `src/mARCH/core/agent_state.py` (edit), `src/mARCH/tests/test_prompts.py` (edit)."
+      ],
+      "acceptanceCriteria": [
+        "When memories list is provided, the system prompt includes a memory context section with the preamble about verifying and refreshing memories.",
+        "Each memory's fact and citation appear in the prompt.",
+        "When no memories are provided, the memory section is entirely absent from the prompt.",
+        "At least 3 new tests cover memory injection logic.",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": true
+    },
+    {
+      "id": "PS-004",
+      "title": "Context compaction and summarization",
+      "description": "As a developer using mARCH CLI, I want the conversation history to be automatically compacted when the context window fills up, replacing old messages with an AI-generated summary so the session can continue without losing important context.",
+      "priority": 4,
+      "complexity": "complex",
+      "riskLevel": "medium",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [
+        "PS-001"
+      ],
+      "implementationNotes": [
+        "Create `src/mARCH/core/context_compaction.py` with a `ContextCompactor` class.",
+        "Implement `should_compact(messages: list[dict], max_tokens: int = 100000) -> bool` — estimate token count (rough: 1 token ≈ 4 chars) and return True if over threshold (e.g., 75% of max_tokens).",
+        "Implement `build_summarization_prompt() -> str` — returns the JS CLI's structured summarization instruction asking the AI to produce a `<summary>` with: Task Overview, Current State, Important Discoveries, Next Steps, Context to Preserve.",
+        "Implement `build_compacted_messages(summary: str, original_user_messages: list[str]) -> list[dict]` — returns a new message list starting with a system-injected message in the format: 'The conversation history has been summarized...' followed by user messages and the summary in `<summary>` tags.",
+        "Implement async `compact(messages: list[dict], ai_complete_fn) -> list[dict]` — calls the AI with the summarization prompt appended to current messages, extracts `<summary>` from response, then calls `build_compacted_messages()`.",
+        "Integrate with `ConversationHistory` in `agent_state.py`: add a `compact_if_needed(ai_complete_fn, max_tokens)` method that checks and performs compaction.",
+        "Add test file `src/mARCH/tests/test_context_compaction.py` with tests: (1) should_compact returns False for short conversations, (2) should_compact returns True when over threshold, (3) build_summarization_prompt includes all 5 required sections, (4) build_compacted_messages produces correct format with summary tags, (5) compact extracts summary from mock AI response.",
+        "Files touched: `src/mARCH/core/context_compaction.py` (new), `src/mARCH/core/agent_state.py` (edit ConversationHistory), `src/mARCH/tests/test_context_compaction.py` (new)."
+      ],
+      "acceptanceCriteria": [
+        "A new file `src/mARCH/core/context_compaction.py` exists with `ContextCompactor` class.",
+        "`should_compact()` correctly detects when conversation exceeds token threshold.",
+        "`build_summarization_prompt()` returns a prompt that asks for Task Overview, Current State, Important Discoveries, Next Steps, and Context to Preserve sections.",
+        "`build_compacted_messages()` produces messages with the compacted history format including `<summary>` tags.",
+        "`ConversationHistory` has a `compact_if_needed` method.",
+        "At least 5 tests in `src/mARCH/tests/test_context_compaction.py`.",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": true
+    },
+    {
+      "id": "PS-005",
+      "title": "Autopilot mode context injection and utility messages",
+      "description": "As a developer using mARCH CLI, I want the correct mode-specific context message injected when transitioning between interactive and autopilot modes, and I want utility messages (quota insufficient, task not complete) available as prompt templates.",
+      "priority": 5,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [
+        "PS-001"
+      ],
+      "implementationNotes": [
+        "Add mode transition message templates to `prompts.py` as module-level constants: `AUTOPILOT_MODE_MESSAGE`, `AUTOPILOT_FLEET_MODE_MESSAGE`, `INTERACTIVE_MODE_MESSAGE`, `INTERACTIVE_NO_EXEC_MESSAGE`.",
+        "Add `get_mode_transition_message(mode: ExecutionMode) -> str` function to `prompts.py` that returns the appropriate message for each mode.",
+        "Add `QUOTA_INSUFFICIENT_MESSAGE` and `TASK_NOT_COMPLETE_MESSAGE` constants to `prompts.py`.",
+        "Add `get_quota_message() -> str` and `get_task_not_complete_message() -> str` utility functions.",
+        "Update `ModeManager` in `execution_mode.py` to expose a `get_transition_context(new_mode: ExecutionMode) -> str` method that returns `get_mode_transition_message(new_mode)`.",
+        "Add tests: (1) each mode returns a distinct non-empty message, (2) AUTOPILOT message mentions auto-approved, (3) INTERACTIVE message mentions manual approval, (4) quota message mentions insufficient, (5) task_not_complete message mentions not yet marked complete.",
+        "Files touched: `src/mARCH/core/prompts.py` (edit), `src/mARCH/core/execution_mode.py` (edit), `src/mARCH/tests/test_prompts.py` (edit)."
+      ],
+      "acceptanceCriteria": [
+        "Mode transition constants exist in `prompts.py` for all 4 mode variants.",
+        "`get_mode_transition_message()` returns the correct message for AUTOPILOT, AUTOPILOT_FLEET, INTERACTIVE, and PLAN modes.",
+        "Quota and task-not-complete message templates are available as public constants/functions.",
+        "`ModeManager.get_transition_context()` returns the mode transition message.",
+        "At least 4 new tests cover mode messages and utility messages.",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],

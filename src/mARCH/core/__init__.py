@@ -1,5 +1,9 @@
 """Core module - Stream buffer, Shell execution, Process management, Async utilities."""
 
+from mARCH.core.prompts import (
+    AgentRole,
+    PromptBuilder,
+)
 from mARCH.core.stream_buffer import (
     StreamBuffer,
     StreamManager,
@@ -31,6 +35,9 @@ from mARCH.core.payload_handler import (
 )
 
 __all__ = [
+    # Prompt builder
+    "AgentRole",
+    "PromptBuilder",
     # Stream buffer
     "StreamBuffer",
     "StreamManager",

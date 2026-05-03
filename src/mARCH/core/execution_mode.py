@@ -1,7 +1,6 @@
 """Execution modes for mARCH CLI (interactive, plan, autopilot)."""
 
 from enum import Enum
-from typing import Optional
 
 
 class ExecutionMode(Enum):
@@ -29,7 +28,7 @@ class ModeManager:
             initial_mode: Initial execution mode
         """
         self.current_mode = initial_mode
-        self.previous_mode: Optional[ExecutionMode] = None
+        self.previous_mode: ExecutionMode | None = None
 
     def set_mode(self, mode: ExecutionMode) -> ExecutionMode:
         """Set execution mode.
@@ -87,3 +86,16 @@ class ModeManager:
             ExecutionMode.SHELL: "[red]shell[/red]",
         }
         return indicators.get(self.current_mode, "[dim]unknown[/dim]")
+
+    def get_transition_context(self, new_mode: ExecutionMode) -> str:
+        """Return the mode-transition context message for the given mode.
+
+        Args:
+            new_mode: The execution mode to generate a message for.
+
+        Returns:
+            Human-readable mode transition message string.
+        """
+        from mARCH.core.prompts import get_mode_transition_message
+
+        return get_mode_transition_message(new_mode)

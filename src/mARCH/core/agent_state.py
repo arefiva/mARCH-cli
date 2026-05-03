@@ -5,10 +5,15 @@ Provides agent state machine, conversation history tracking, and multi-turn
 conversation management for the mARCH CLI.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from mARCH.core.prompts import AgentRole
 
 
 class AgentState(str, Enum):
@@ -210,6 +215,35 @@ class ConversationHistory:
         """Clear conversation history."""
         self.messages.clear()
 
+    async def compact_if_needed(
+        self,
+        ai_complete_fn: Any,
+        max_tokens: int = 100_000,
+    ) -> bool:
+        """Compact conversation history if it exceeds the token threshold.
+
+        Args:
+            ai_complete_fn: Async callable that accepts message list and
+                returns AI response string.
+            max_tokens: Token budget for the context window.
+
+        Returns:
+            True if compaction was performed, False otherwise.
+        """
+        from mARCH.core.context_compaction import ContextCompactor
+
+        compactor = ContextCompactor()
+        raw = [{"role": m.role, "content": m.content} for m in self.messages]
+        if not compactor.should_compact(raw, max_tokens):
+            return False
+
+        compacted = await compactor.compact(raw, ai_complete_fn)
+
+        self.messages.clear()
+        for msg in compacted:
+            self.add_message(msg["role"], msg["content"])
+        return True
+
     def export(self) -> list[dict]:
         """Export conversation history as dictionaries."""
         return [msg.to_dict() for msg in self.messages]
@@ -222,6 +256,7 @@ class Agent:
         self,
         name: str = "mARCH",
         mode: ConversationMode = ConversationMode.INTERACTIVE,
+        role: AgentRole | None = None,
     ):
         """
         Initialize agent.
@@ -229,9 +264,13 @@ class Agent:
         Args:
             name: Agent name
             mode: Conversation mode
+            role: Agent role for identity section (defaults to TASK_AGENT)
         """
+        from mARCH.core.prompts import AgentRole as _AgentRole
+
         self.name = name
         self.mode = mode
+        self.role = role if role is not None else _AgentRole.TASK_AGENT
         self.state = AgentState.IDLE
         self.history = ConversationHistory()
         self.context = AgentContext()
@@ -292,51 +331,20 @@ class Agent:
 
         return messages
 
-    def _get_system_prompt(self) -> str:
-        """Generate system prompt for agent."""
-        import os
-        from pathlib import Path
+    def _get_system_prompt(
+        self,
+        memories: list[dict] | None = None,
+    ) -> str:
+        """Generate system prompt by delegating to PromptBuilder."""
+        from mARCH.core.prompts import PromptBuilder
 
-        cwd = Path(self.context.current_directory).expanduser().resolve()
-        available_files = []
-
-        # Get available files in CWD (up to 100 most recent)
-        try:
-            if cwd.exists():
-                all_items = sorted(
-                    cwd.iterdir(),
-                    key=lambda p: p.stat().st_mtime,
-                    reverse=True
-                )[:100]
-                available_files = [
-                    (item.name, "dir" if item.is_dir() else "file")
-                    for item in all_items
-                ]
-        except (OSError, PermissionError):
-            pass
-
-        files_section = ""
-        if available_files:
-            files_list = "\n".join(
-                f"  - {name} ({ftype})"
-                for name, ftype in available_files[:20]
-            )
-            files_section = f"\nAvailable files in current directory:\n{files_list}"
-            if len(available_files) > 20:
-                files_section += f"\n  ... and {len(available_files) - 20} more"
-
-        return f"""You are {self.name}, an AI-powered coding assistant.
-You help developers with code analysis, debugging, and implementation.
-
-Current context:
-- Directory: {self.context.current_directory}
-- Language: {self.context.language or "Not specified"}
-- Branch: {self.context.git_branch or "Not specified"}
-
-You have read access to files in the current directory and its subdirectories.
-When asked to find or analyze files, you can access them.{files_section}
-
-Be concise, helpful, and provide code examples when appropriate."""
+        builder = PromptBuilder()
+        return builder.build_system_prompt(
+            name=self.name,
+            role=self.role,
+            context=self.context,
+            memories=memories,
+        )
 
     def get_history(self, limit: int | None = None) -> list[ConversationMessage]:
         """Get conversation history."""

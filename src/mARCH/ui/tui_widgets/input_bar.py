@@ -5,6 +5,7 @@ from typing import ClassVar
 
 from textual.app import ComposeResult
 from textual.binding import Binding, BindingType
+from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Input, Label
 
@@ -34,6 +35,13 @@ MODE_COLORS: dict[InputMode, str] = {
 
 class InputBar(Widget):
     """Input bar with mode indicator and text field."""
+
+    class ModeChanged(Message):
+        """Posted when the input mode changes."""
+
+        def __init__(self, mode: InputMode) -> None:
+            super().__init__()
+            self.mode = mode
 
     DEFAULT_CSS = """
     InputBar {
@@ -91,6 +99,7 @@ class InputBar(Widget):
         if self._mode_label is not None:
             color = MODE_COLORS[self._mode]
             self._mode_label.update(f"[{color}]{self._mode.value}[/]")
+        self.post_message(InputBar.ModeChanged(self._mode))
 
     def action_toggle_multiline(self) -> None:
         """Toggle multiline input (no-op in this scaffold)."""

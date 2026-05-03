@@ -704,3 +704,72 @@ class TestStatusBarMarkup:
         src = inspect.getsource(StatusBar.set_status)
         assert "markup=True" not in src
 
+
+# ============================================================================
+# Feature/mode-toggle: US-001 — Mode change notification via Textual message
+# ============================================================================
+
+
+class TestModeChangedMessage:
+    """Tests for InputBar.ModeChanged message class."""
+
+    def test_mode_changed_importable(self):
+        """InputBar.ModeChanged is importable from mARCH.ui.tui_widgets.input_bar."""
+        from mARCH.ui.tui_widgets.input_bar import InputBar
+
+        assert InputBar.ModeChanged is not None
+
+    def test_mode_changed_is_textual_message(self):
+        """InputBar.ModeChanged is a subclass of textual.message.Message."""
+        from textual.message import Message
+
+        from mARCH.ui.tui_widgets.input_bar import InputBar
+
+        assert issubclass(InputBar.ModeChanged, Message)
+
+    def test_mode_changed_carries_mode_attribute(self):
+        """InputBar.ModeChanged carries a .mode attribute of type InputMode."""
+        from mARCH.ui.tui_widgets.input_bar import InputBar, InputMode
+
+        msg = InputBar.ModeChanged(InputMode.PLAN)
+        assert msg.mode == InputMode.PLAN
+        assert isinstance(msg.mode, InputMode)
+
+    def test_action_cycle_mode_posts_mode_changed(self):
+        """action_cycle_mode() calls post_message with ModeChanged carrying the new mode."""
+        from unittest.mock import MagicMock
+
+        from mARCH.ui.tui_widgets.input_bar import InputBar, InputMode
+
+        bar = InputBar()
+        bar._mode_label = MagicMock()
+        bar.post_message = MagicMock()
+
+        # Default mode is INTERACTIVE; one cycle -> PLAN
+        bar.action_cycle_mode()
+
+        bar.post_message.assert_called_once()
+        posted = bar.post_message.call_args[0][0]
+        assert isinstance(posted, InputBar.ModeChanged)
+        assert posted.mode == InputMode.PLAN
+
+    def test_on_input_bar_mode_changed_adds_system_message(self):
+        """on_input_bar_mode_changed calls ConversationView.add_message with SYSTEM role."""
+        from unittest.mock import MagicMock
+
+        from mARCH.ui.tui_app import MarchApp
+        from mARCH.ui.tui_widgets.input_bar import InputBar, InputMode
+        from mARCH.ui.tui_widgets.message import MessageRole
+
+        app = MarchApp()
+        mock_conv = MagicMock()
+        app.query_one = MagicMock(return_value=mock_conv)
+
+        event = InputBar.ModeChanged(InputMode.PLAN)
+        app.on_input_bar_mode_changed(event)
+
+        mock_conv.add_message.assert_called_once()
+        role, text = mock_conv.add_message.call_args[0]
+        assert role == MessageRole.SYSTEM
+        assert "PLAN" in text
+

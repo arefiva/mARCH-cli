@@ -77,6 +77,11 @@ class MarchApp(App[None]):
         """Focus the input field when the app starts."""
         self.query_one("#march-input", Input).focus()
 
+    def on_input_bar_mode_changed(self, event: InputBar.ModeChanged) -> None:
+        """Display a system notification when the input mode changes."""
+        conv = self.query_one(ConversationView)
+        conv.add_message(MessageRole.SYSTEM, f"⚡ Mode changed to: {event.mode.value}")
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle message submission from the input bar."""
         text = event.value.strip()

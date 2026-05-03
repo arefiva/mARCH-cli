@@ -14,6 +14,7 @@ from textual.widgets import Footer, Header, Input
 
 from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType
 from mARCH.ui.tui_widgets import ConversationView, InputBar
+from mARCH.ui.tui_widgets.input_bar import InputMode
 from mARCH.ui.tui_widgets.message import MessageRole
 
 if TYPE_CHECKING:
@@ -102,7 +103,9 @@ class MarchApp(App[None]):
         if self._agent is not None:
             self._agent.add_user_message(text)
         if self._ai_client is not None:
-            self._stream_ai_response(text)
+            input_bar = self.query_one("#input-bar", InputBar)
+            current_mode = input_bar.current_mode
+            self._stream_ai_response(text, current_mode)
         else:
             conv.add_message(
                 MessageRole.ASSISTANT,
@@ -151,7 +154,7 @@ class MarchApp(App[None]):
         return "Model: not configured"
 
     @work(thread=True, exclusive=True)
-    def _stream_ai_response(self, user_text: str) -> None:
+    def _stream_ai_response(self, user_text: str, mode: InputMode = InputMode.INTERACTIVE) -> None:
         """Stream AI response in a background thread."""
         conv = self.query_one(ConversationView)
         streaming_widget = self.call_from_thread(conv.start_streaming)
@@ -159,6 +162,11 @@ class MarchApp(App[None]):
             messages = self._agent.get_conversation_context(include_system_prompt=True)
         else:
             messages = [{"role": "user", "content": user_text}]
+        if mode == InputMode.PLAN:
+            for i in range(len(messages) - 1, -1, -1):
+                if messages[i]["role"] == "user":
+                    messages[i] = {**messages[i], "content": f"[[PLAN]] {user_text}"}
+                    break
         full_response = ""
         try:
             for chunk in self._ai_client.stream_chat(messages):

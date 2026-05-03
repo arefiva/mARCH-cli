@@ -1,73 +1,72 @@
 {
   "project": "copilot-cli-python",
-  "branchName": "feature/tui-functional-conversation",
-  "description": "Fixes for issues identified in code review of the TUI functional conversation branch: streaming error handling, markup injection, slash command restoration, mode cycling, and dead code cleanup.",
-  "_source": "tasks/prd-tui-functional-conversation/prd-review-fixes.md",
+  "branchName": "feature/mode-toggle",
+  "description": "Fix Shift+Tab mode toggle so that cycling INTERACTIVE → PLAN → AUTOPILOT triggers a conversation-view notification, prefixes plan-mode messages with [[PLAN]] before sending to the AI, and injects the canonical plan-mode / autopilot system-prompt sections — matching the original Copilot CLI behaviour exactly.",
+  "_source": "tasks/prd-mode-toggle/prd.md",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Harden streaming error handling and add streaming tests",
-      "description": "As a user, I want AI streaming errors to be handled gracefully \u2014 with cleanup, logging, and a visually distinct error indicator \u2014 so that the conversation state is never corrupted and I can tell when something went wrong.",
+      "title": "Mode change notification via Textual message",
+      "description": "As a user, I want to see a system message in the conversation view when I press Shift+Tab so I can confirm which mode is now active.",
       "priority": 1,
       "complexity": "standard",
-      "riskLevel": "medium",
+      "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
       "dependsOn": [],
-      "notes": "The start_streaming call is currently outside the try block (line 81 of tui_app.py). The try block only starts at line 87, meaning widget init failures crash without cleanup. Also, errors are silently swallowed with no logging and displayed as plain assistant text.",
+      "notes": "InputBar already has the backtab binding and action_cycle_mode(). This story just adds post_message and the MarchApp handler. post_message requires the widget to be mounted, so unit tests must mock it rather than calling it directly on an unmounted widget.",
       "implementationNotes": [
-        "In src/mARCH/ui/tui_app.py, restructure _stream_ai_response so that the call_from_thread(conv.start_streaming) on line 81 is INSIDE the try block, not before it. Move lines 80-81 into the try block.",
-        "Change the error handling structure to try/except/finally: call conv.finish_streaming() in the finally block so it always executes, guarded by 'if streaming_widget is not None' to handle the case where start_streaming itself failed.",
-        "Add logging at module level: import logging; logger = logging.getLogger(__name__). In the except branch, call logger.error('Streaming error: %s', e, exc_info=True).",
-        "Display errors as a SYSTEM role message or with a distinct '[bold red]ERROR[/]' prefix instead of appending raw error text to the assistant bubble. Use str(e) and truncate to 200 chars max to avoid leaking sensitive info.",
-        "Add async Textual pilot tests in tests/test_tui_rewrite.py: (a) mock ai_client.stream_chat to yield ['Hel', 'lo'] and verify assistant message content equals 'Hello' and agent.add_assistant_message('Hello') was called; (b) mock ai_client.stream_chat to raise RuntimeError and verify error message appears with SYSTEM role and _streaming_widget is None after; (c) verify finish_streaming is always called even when start_streaming or stream_chat raises."
+        "In src/mARCH/ui/tui_widgets/input_bar.py, add a nested Textual Message class: `class ModeChanged(Message): def __init__(self, mode: InputMode) -> None: super().__init__(); self.mode = mode`. Place it inside the InputBar class body, before compose().",
+        "In InputBar.action_cycle_mode(), after updating self._mode and self._mode_label, add `self.post_message(InputBar.ModeChanged(self._mode))` as the last line of the method.",
+        "In src/mARCH/ui/tui_app.py, add event handler `def on_input_bar_mode_changed(self, event: InputBar.ModeChanged) -> None:`. Inside it: query ConversationView with `conv = self.query_one(ConversationView)` and call `conv.add_message(MessageRole.SYSTEM, f'⚡ Mode changed to: {event.mode.value}')`. The InputBar import already exists via `from mARCH.ui.tui_widgets import ConversationView, InputBar`.",
+        "Add import `from textual.message import Message` in input_bar.py if not already present. Check existing imports first.",
+        "Do NOT change CYCLE_ORDER, MODE_COLORS, InputMode enum values, or existing BINDINGS. Do NOT change the backtab binding key string."
       ],
       "preservationConstraints": [
-        "src/mARCH/ui/tui_app.py::MarchApp",
-        "src/mARCH/ui/tui_widgets/conversation.py::ConversationView",
-        "src/mARCH/ui/tui_widgets/conversation.py::ConversationView.start_streaming",
-        "src/mARCH/ui/tui_widgets/conversation.py::ConversationView.finish_streaming"
+        "src/mARCH/ui/tui_widgets/input_bar.py",
+        "src/mARCH/ui/tui_widgets/input_bar.py::InputBar",
+        "src/mARCH/ui/tui_widgets/input_bar.py::InputMode",
+        "src/mARCH/ui/tui_widgets/input_bar.py::CYCLE_ORDER",
+        "src/mARCH/ui/tui_app.py::MarchApp"
       ],
       "acceptanceCriteria": [
-        "start_streaming() call is inside the try block in _stream_ai_response",
-        "finish_streaming() is called in a finally block so it executes on success, error, and cancellation",
-        "Streaming errors are logged via logger.error(...)",
-        "Error messages displayed in ConversationView use a visually distinct role or style (not plain assistant text)",
-        "Unit test: mock stream_chat raises RuntimeError \u2014 error message widget appears in ConversationView and _streaming_widget is None after",
-        "Unit test: mock stream_chat yields ['Hel', 'lo'] \u2014 assistant message content equals 'Hello' and agent.add_assistant_message('Hello') was called",
-        "Unit test: when start_streaming raises, finish_streaming is still called and no NameError occurs",
+        "InputBar.ModeChanged is importable from mARCH.ui.tui_widgets.input_bar and is a subclass of textual.message.Message",
+        "InputBar.ModeChanged carries a .mode attribute of type InputMode",
+        "Unit test: calling action_cycle_mode() on an InputBar with a mocked post_message verifies post_message is called once with an InputBar.ModeChanged whose .mode equals the expected next mode",
+        "Unit test: MarchApp.on_input_bar_mode_changed calls ConversationView.add_message with MessageRole.SYSTEM and a string containing the new mode name",
+        "All pre-existing tests in tests/test_tui_rewrite.py continue to pass",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
       "passes": true
-    },
-    {
-      "id": "US-002",
-      "title": "Escape Rich markup in user-supplied content",
-      "description": "As a user, I want my messages and tool call details to be displayed literally so that Rich markup codes in my input cannot spoof the UI or break rendering.",
-      "priority": 1,
+      "title": "Message prefix injection based on mode",
+      "description": "As a user in PLAN mode, I want my messages sent to the AI with [[PLAN]] prepended so the AI enters plan-mode behaviour, while the conversation view shows my original text without that prefix.",
+      "priority": 2,
       "complexity": "standard",
-      "riskLevel": "medium",
+      "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [],
-      "notes": "MessageWidget uses markup=True but user content is interpolated without escaping. A user typing '[bold red]text[/]' sees styled text. Malformed tags like '[/' could break rendering. Same issue in ToolModal labels.",
+      "dependsOn": [
+        "US-001"
+      ],
+      "notes": "The conversation view and agent history must store the original (unprefixed) text. Only the transient messages list passed to the AI client gets the [[PLAN]] prefix. The _stream_ai_response signature gains a second parameter `mode`.",
       "implementationNotes": [
-        "Add 'from rich.markup import escape' to src/mARCH/ui/tui_widgets/message.py.",
-        "In MessageWidget.__init__, escape the content parameter before interpolation: super().__init__(f'{label}  {escape(content)}', markup=True). Store the raw unescaped content in self._content for internal tracking.",
-        "In MessageWidget.append_chunk, escape the accumulated _content before updating: self.update(f'{label}  {escape(self._content)}'). The role label uses trusted markup and must NOT be escaped.",
-        "Add 'from rich.markup import escape' to src/mARCH/ui/tui_widgets/tool_modal.py.",
-        "In ToolModal.compose(), escape self._tool_name, self._description, and self._arguments before interpolation into the Label constructors.",
-        "Add tests in tests/test_tui_rewrite.py: construct MessageWidget with content '[bold red]injected[/]' and verify _content stores the raw string but the widget renderable contains escaped literal brackets. Test append_chunk similarly."
+        "In MarchApp.on_input_submitted (tui_app.py), after the empty-string guard and before the slash-command branch, read the current mode: `input_bar = self.query_one('#input-bar', InputBar); current_mode = input_bar.current_mode`. Pass current_mode to the streaming call.",
+        "Update the call to _stream_ai_response to pass mode: change `self._stream_ai_response(text)` to `self._stream_ai_response(text, current_mode)`. Keep all other on_input_submitted logic unchanged.",
+        "Update MarchApp._stream_ai_response signature from `(self, user_text: str)` to `(self, user_text: str, mode: InputMode = InputMode.INTERACTIVE)`. Add `from mARCH.ui.tui_widgets.input_bar import InputBar, InputMode` near the top of tui_app.py if not already imported at module level (it is already there via the tui_widgets import, but InputMode needs an explicit import).",
+        "Inside _stream_ai_response, after building `messages` from agent.get_conversation_context() or the fallback list: if mode == InputMode.PLAN, find the last dict in messages where dict['role'] == 'user' and replace its 'content' with f'[[PLAN]] {user_text}'. Use the original user_text parameter, not the stored history value, to keep the prefix clean.",
+        "Do NOT modify agent.add_user_message(text) calls — agent history must remain unprefixed. Do NOT modify ConversationView.add_message calls — the displayed text must remain unprefixed."
       ],
       "preservationConstraints": [
-        "src/mARCH/ui/tui_widgets/message.py::MessageWidget",
-        "src/mARCH/ui/tui_widgets/message.py::MessageWidget.append_chunk",
-        "src/mARCH/ui/tui_widgets/tool_modal.py::ToolModal"
+        "src/mARCH/ui/tui_app.py::MarchApp.on_input_submitted",
+        "src/mARCH/ui/tui_app.py::MarchApp._stream_ai_response",
+        "src/mARCH/ui/tui_widgets/input_bar.py::InputBar.current_mode"
       ],
       "acceptanceCriteria": [
-        "Unit test: MessageWidget(USER, '[bold]hi[/]') renders with literal '[bold]' visible (not bold text)",
-        "Unit test: after append_chunk('[red]x[/]'), rendered output contains literal '[red]' brackets",
-        "Unit test: ToolModal(tool_name='[bold]rm[/]') renders with literal '[bold]' in the tool name label",
-        "Role labels (USER, ASSISTANT, etc.) still render with color styling",
+        "Unit test: when InputBar._mode is set to InputMode.PLAN and on_input_submitted fires with text='hello', the ConversationView receives a USER message with content 'hello' (no [[PLAN]] prefix)",
+        "Unit test: _stream_ai_response with mode=InputMode.PLAN builds a messages list where the last user message content is '[[PLAN]] hello'",
+        "Unit test: _stream_ai_response with mode=InputMode.INTERACTIVE builds a messages list where the last user message content is 'hello' (no prefix)",
+        "Unit test: submitting empty or whitespace-only text does NOT add any message to ConversationView regardless of mode",
+        "Unit test: Agent.get_conversation_context() after on_input_submitted stores the original text without [[PLAN]] prefix",
+        "All pre-existing tests in tests/test_tui_rewrite.py continue to pass",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
@@ -75,118 +74,44 @@
     },
     {
       "id": "US-003",
-      "title": "Restore slash command dispatch and exit handling in TUI",
-      "description": "As a user, I want to type /help, /status, /model, exit, and other slash and exit commands in the TUI input bar and have them work, so that the TUI provides the same command surface as the old REPL.",
-      "priority": 2,
-      "complexity": "complex",
-      "riskLevel": "high",
-      "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [],
-      "notes": "The old REPL loop handled all slash commands, exit commands, and plan mode detection. The new TUI replaced it with a simple stream-only path. The existing handlers in cli.py use console.print() which does not render inside Textual \u2014 the TUI must reimplement output display via ConversationView SYSTEM messages. Do NOT import cli.AppContext into tui_app.py (circular import risk).",
-      "implementationNotes": [
-        "Create src/mARCH/ui/tui_session.py with a TuiSession dataclass (or plain class) holding: ai_client (ConversationClient | None), agent (Agent | None), slash_parser (SlashCommandParser), mode_manager (ModeManager), config_manager, github_integration (GitHubIntegration), experimental_mode (bool), current_model (str). This is a lightweight data carrier \u2014 no console.print calls.",
-        "In src/mARCH/cli/cli.py main(), construct a TuiSession from AppContext fields and pass to MarchApp(session=session). Keep the existing MarchApp(ai_client=..., agent=...) call path working by having MarchApp.__init__ accept both 'session: TuiSession | None = None' and the old kwargs for backward compatibility with tests.",
-        "In src/mARCH/ui/tui_app.py on_input_submitted, implement dispatch precedence: (1) empty/whitespace \u2192 return early; (2) exit commands (exit, quit, :q, q!) \u2192 call self.exit(); (3) slash commands (starts with /) \u2192 parse with session.slash_parser, execute, display result as SYSTEM message; (4) [[PLAN]] prefix \u2192 show 'Plan mode not yet supported in TUI' as SYSTEM message; (5) normal text \u2192 existing streaming path.",
-        "For slash command execution: implement a _handle_slash_command method that handles each SlashCommandType. For output-only commands (/help, /status, /model without args, /lsp, /feedback), generate the output text and display as a SYSTEM message. For /model <name>, update session.config_manager and session.current_model, show confirmation. For /experimental, toggle and show confirmation. For /login and /setup, show 'Use the CLI directly for interactive commands'.",
-        "Do NOT add the user message to conversation history or ConversationView for exit or slash commands \u2014 only for normal AI messages. Clear the input field for all commands.",
-        "Add tests: (a) typing 'exit' calls app.exit(); (b) typing '/help' shows a SYSTEM message in ConversationView; (c) typing '/model' shows current model as SYSTEM message; (d) slash commands do NOT add USER messages to ConversationView."
-      ],
-      "preservationConstraints": [
-        "src/mARCH/cli/cli.py::main",
-        "src/mARCH/cli/cli.py::AppContext",
-        "src/mARCH/cli/cli.py::handle_slash_command",
-        "src/mARCH/ui/tui_app.py::MarchApp",
-        "src/mARCH/core/slash_commands.py::SlashCommandParser"
-      ],
-      "acceptanceCriteria": [
-        "TuiSession class exists in src/mARCH/ui/tui_session.py and holds ai_client, agent, slash_parser, mode_manager, config_manager, github_integration fields",
-        "cli.py::main() constructs a TuiSession and passes it to MarchApp",
-        "MarchApp(session=None) and MarchApp() still work (backward compat with existing tests)",
-        "Typing 'exit' or 'quit' in the TUI exits the app",
-        "Typing '/help' displays a SYSTEM message with command help text in ConversationView",
-        "Typing '/status' displays a SYSTEM message with current status info",
-        "Typing '/model' displays a SYSTEM message with the current model name",
-        "Slash and exit commands do NOT add a USER message to ConversationView",
-        "Normal text input still streams an AI response (existing behavior preserved)",
-        "Unit test: exit command triggers app.exit()",
-        "Unit test: /help input produces a SYSTEM MessageWidget in ConversationView",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
-      "passes": true
-    },
-    {
-      "id": "US-004",
-      "title": "Connect mode cycling to real ModeManager",
-      "description": "As a user, I want Shift+Tab mode cycling in the TUI to change the actual execution mode via ModeManager so that the mode indicator reflects real state and mode-dependent behavior works.",
+      "title": "System prompt injection for plan and autopilot modes",
+      "description": "As a user, I want the AI to receive the correct mode-specific system prompt section so it behaves in full plan mode or full autopilot mode, exactly as in the original Copilot CLI.",
       "priority": 3,
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
       "dependsOn": [
-        "US-003"
+        "US-002"
       ],
-      "notes": "InputBar._mode is a local variable disconnected from ModeManager. ModeManager.cycle_mode() cycles 3 modes (interactive \u2192 plan \u2192 autopilot) while InputBar CYCLE_ORDER has 4 (adds SHELL). SHELL is marked 'future' in execution_mode.py.",
+      "notes": "The plan-mode prompt text is copied verbatim from the original JS source (21-react-scheduler.js line 639-656). The autopilot prompt is copied verbatim from line 591. Avoid circular imports: plan_mode.py must import InputMode inside the function body only, guarded by TYPE_CHECKING for the type hint.",
       "implementationNotes": [
-        "In src/mARCH/ui/tui_widgets/input_bar.py, add an optional mode_manager parameter to InputBar.__init__(self, mode_manager=None, **kwargs). Store as self._mode_manager.",
-        "In action_cycle_mode(), if self._mode_manager is not None, call self._mode_manager.cycle_mode() and map the returned ExecutionMode back to the corresponding InputMode to update self._mode and the label. If mode_manager is None, keep the current local-only cycling as fallback for tests.",
-        "Remove SHELL from CYCLE_ORDER since ExecutionMode.SHELL is marked 'future' in execution_mode.py and ModeManager does not support it. Update MODE_COLORS dict accordingly but keep InputMode.SHELL defined for forward compat.",
-        "In src/mARCH/ui/tui_app.py compose(), when creating InputBar, pass mode_manager from self._session.mode_manager if self._session is available.",
-        "Add tests: construct InputBar with a mock mode_manager, call action_cycle_mode, verify mode_manager.cycle_mode() was called and the label updated to match."
+        "Extend src/mARCH/core/plan_mode.py with two module-level string constants. PLAN_MODE_SYSTEM_PROMPT must be the exact text block (see PRD section US-003). AUTOPILOT_SYSTEM_PROMPT must be: 'You are running in non-interactive mode and have no way to communicate with the user. You must work on the task until it is completed. Do not stop to ask questions or request confirmation - make reasonable assumptions and proceed autonomously. Complete the entire task before finishing.' — these strings match the original JS source exactly.",
+        "Add `build_mode_system_prompt(base_prompt: str, mode: Any) -> str` to plan_mode.py. Inside the function body (not at module level), import: `from mARCH.ui.tui_widgets.input_bar import InputMode`. Compare mode with InputMode.PLAN → return base_prompt + '\\n\\n' + PLAN_MODE_SYSTEM_PROMPT.strip(); InputMode.AUTOPILOT → return AUTOPILOT_SYSTEM_PROMPT.strip() + '\\n\\n' + base_prompt; otherwise return base_prompt unchanged. Add `from __future__ import annotations` at top of plan_mode.py and use `from typing import TYPE_CHECKING` guard for the type annotation: `if TYPE_CHECKING: from mARCH.ui.tui_widgets.input_bar import InputMode`.",
+        "In MarchApp._stream_ai_response (tui_app.py), after building `messages`, augment the system message: find the first dict with role == 'system'. If found, replace its 'content' with build_mode_system_prompt(original_content, mode). If no system message exists in the list, prepend {'role': 'system', 'content': build_mode_system_prompt('', mode)}. Import build_mode_system_prompt at top of tui_app.py: `from mARCH.core.plan_mode import build_mode_system_prompt`.",
+        "Do NOT modify PlanModeDetector, its PLAN_PREFIX constant, is_plan_request(), or extract_content(). These remain unchanged.",
+        "The function signature annotation for mode in build_mode_system_prompt should use `Any` at runtime (to avoid circular import) with the TYPE_CHECKING guard providing the real type for linters."
       ],
       "preservationConstraints": [
-        "src/mARCH/ui/tui_widgets/input_bar.py::InputBar",
-        "src/mARCH/ui/tui_widgets/input_bar.py::InputMode",
-        "src/mARCH/core/execution_mode.py::ModeManager",
-        "src/mARCH/core/execution_mode.py::ModeManager.cycle_mode"
+        "src/mARCH/core/plan_mode.py",
+        "src/mARCH/core/plan_mode.py::PlanModeDetector",
+        "src/mARCH/core/plan_mode.py::PlanModeDetector.PLAN_PREFIX",
+        "src/mARCH/core/plan_mode.py::PlanModeDetector.is_plan_request",
+        "src/mARCH/core/plan_mode.py::PlanModeDetector.extract_content"
       ],
       "acceptanceCriteria": [
-        "InputBar.__init__ accepts an optional mode_manager keyword argument",
-        "When mode_manager is provided, action_cycle_mode() calls mode_manager.cycle_mode()",
-        "When mode_manager is None, cycling still works locally (backward compat)",
-        "SHELL mode is removed from CYCLE_ORDER (or ModeManager is extended) \u2014 the two are consistent",
-        "Unit test: cycling with a mock ModeManager calls cycle_mode() and updates the label",
+        "PLAN_MODE_SYSTEM_PROMPT is importable from mARCH.core.plan_mode and contains the substrings '[[PLAN]]', 'plan mode', and 'plan.md'",
+        "AUTOPILOT_SYSTEM_PROMPT is importable from mARCH.core.plan_mode and contains 'non-interactive mode' and 'autonomously'",
+        "build_mode_system_prompt(base, InputMode.PLAN) returns a string containing '[[PLAN]]' and 'plan mode' and 'plan.md'",
+        "build_mode_system_prompt(base, InputMode.AUTOPILOT) returns a string that starts with the autopilot paragraph (contains 'non-interactive mode' and 'autonomously') followed by base",
+        "build_mode_system_prompt(base, InputMode.INTERACTIVE) returns base unchanged",
+        "Unit test: _stream_ai_response in PLAN mode produces a system message containing '[[PLAN]]' and 'plan mode'",
+        "Unit test: _stream_ai_response in AUTOPILOT mode produces a system message containing 'non-interactive mode' and 'autonomously'",
+        "PlanModeDetector.is_plan_request and .extract_content still work identically to before",
+        "No circular import: `python -c 'from mARCH.core.plan_mode import build_mode_system_prompt'` exits with code 0",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": true
-    },
-    {
-      "id": "US-005",
-      "title": "Remove dead code and fix unused widget bugs",
-      "description": "As a developer, I want dead handler functions and unused widget bugs cleaned up so that the codebase is easier to navigate and maintain.",
-      "priority": 4,
-      "complexity": "standard",
-      "riskLevel": "medium",
-      "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [
-        "US-003"
-      ],
-      "notes": "The handler functions in cli.py are imported by tests/test_phase2_cli.py. Those tests must be updated or removed as part of this story. StatusBar, HeaderWidget, SpinnerWidget are kept in the package for future use but StatusBar has an API bug.",
-      "implementationNotes": [
-        "In src/mARCH/cli/cli.py, remove these functions that are no longer the active code path after US-003 moved slash handling to the TUI: handle_slash_command, handle_login_command, handle_logout_command, handle_model_command, handle_lsp_command, handle_feedback_command, handle_experimental_command, handle_status_command, handle_setup_command, handle_plan_mode, handle_regular_input. Keep print_help_text and print_banner.",
-        "Before removing, update tests/test_phase2_cli.py which imports handle_model_command, handle_experimental_command, handle_status_command. Either rewrite those tests to exercise the TUI slash command path, or if the tests cover SlashCommandParser behavior (not the handlers), redirect imports to the parser.",
-        "Fix StatusBar in src/mARCH/ui/tui_widgets/status_bar.py: change __init__ to super().__init__('', markup=True) and remove markup=True from the self.update(...) call in set_status. This fixes the TypeError that would occur if set_status were called.",
-        "Keep HeaderWidget, StatusBar, SpinnerWidget, theme.py, and colors.py in the codebase \u2014 they represent design work for future integration. Do not remove them from tui_widgets/__init__.py exports.",
-        "Remove unused imports from cli.py that were only needed by the removed functions: PlanModeDetector, PlanGenerator, AutopilotExecutor, PlanApprovalUI, PlanResultDisplay \u2014 verify no other code in the file uses them before removing."
-      ],
-      "preservationConstraints": [
-        "src/mARCH/cli/cli.py::main",
-        "src/mARCH/cli/cli.py::AppContext",
-        "src/mARCH/cli/cli.py::print_help_text",
-        "src/mARCH/ui/tui_widgets/__init__.py",
-        "tests/test_phase2_cli.py"
-      ],
-      "acceptanceCriteria": [
-        "handle_slash_command, handle_plan_mode, handle_regular_input, and all individual handler functions are removed from cli.py",
-        "tests/test_phase2_cli.py is updated and still passes after handler removal",
-        "StatusBar.__init__ passes markup=True to super().__init__ and set_status does not pass markup=True to self.update()",
-        "No unused imports remain in cli.py after function removal",
-        "src/mARCH/ui/tui_widgets/__init__.py still exports HeaderWidget, SpinnerWidget, StatusBar",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
-      "passes": true
+      "passes": false
     }
   ]
 }

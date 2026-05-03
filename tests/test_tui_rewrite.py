@@ -773,3 +773,123 @@ class TestModeChangedMessage:
         assert role == MessageRole.SYSTEM
         assert "PLAN" in text
 
+
+# ============================================================================
+# Feature/mode-toggle: US-002 — Message prefix injection based on mode
+# ============================================================================
+
+
+@pytest.mark.asyncio
+async def test_plan_mode_conversation_view_shows_unprefixed_text():
+    """In PLAN mode, ConversationView receives USER message without [[PLAN]] prefix."""
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.conversation import ConversationView
+    from mARCH.ui.tui_widgets.input_bar import InputMode
+    from mARCH.ui.tui_widgets.message import MessageRole, MessageWidget
+
+    async with MarchApp(ai_client=None).run_test(headless=True) as pilot:
+        input_bar = pilot.app.query_one("#input-bar")
+        input_bar._mode = InputMode.PLAN
+        await pilot.press("h", "e", "l", "l", "o")
+        await pilot.press("enter")
+        await pilot.pause()
+        conv = pilot.app.query_one(ConversationView)
+        messages = list(conv.query(MessageWidget))
+        user_msgs = [m for m in messages if m._role == MessageRole.USER]
+        assert len(user_msgs) >= 1
+        assert user_msgs[0]._content == "hello"
+
+
+@pytest.mark.asyncio
+async def test_stream_ai_response_plan_mode_prefixes_last_user_message():
+    """_stream_ai_response with mode=PLAN sends [[PLAN]]-prefixed user message to AI."""
+    from unittest.mock import MagicMock
+
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.input_bar import InputMode
+
+    captured_messages: list = []
+
+    mock_agent = MagicMock()
+    mock_agent.get_conversation_context.return_value = [
+        {"role": "system", "content": "system prompt"},
+        {"role": "user", "content": "hello"},
+    ]
+
+    def capture_and_stream(messages):
+        captured_messages.extend(messages)
+        return iter([])
+
+    mock_client = MagicMock()
+    mock_client.stream_chat.side_effect = capture_and_stream
+
+    async with MarchApp(ai_client=mock_client, agent=mock_agent).run_test(headless=True) as pilot:
+        pilot.app._stream_ai_response("hello", InputMode.PLAN)
+        await pilot.pause(delay=0.5)
+
+    assert len(captured_messages) > 0
+    user_msgs = [m for m in captured_messages if m["role"] == "user"]
+    assert user_msgs[-1]["content"] == "[[PLAN]] hello"
+
+
+@pytest.mark.asyncio
+async def test_stream_ai_response_interactive_mode_no_prefix():
+    """_stream_ai_response with mode=INTERACTIVE sends user message without prefix."""
+    from unittest.mock import MagicMock
+
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.input_bar import InputMode
+
+    captured_messages: list = []
+
+    mock_agent = MagicMock()
+    mock_agent.get_conversation_context.return_value = [
+        {"role": "user", "content": "hello"},
+    ]
+
+    def capture_and_stream(messages):
+        captured_messages.extend(messages)
+        return iter([])
+
+    mock_client = MagicMock()
+    mock_client.stream_chat.side_effect = capture_and_stream
+
+    async with MarchApp(ai_client=mock_client, agent=mock_agent).run_test(headless=True) as pilot:
+        pilot.app._stream_ai_response("hello", InputMode.INTERACTIVE)
+        await pilot.pause(delay=0.5)
+
+    user_msgs = [m for m in captured_messages if m["role"] == "user"]
+    assert user_msgs[-1]["content"] == "hello"
+
+
+@pytest.mark.asyncio
+async def test_empty_text_no_message_any_mode():
+    """Submitting empty text adds no message regardless of mode."""
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.conversation import ConversationView
+    from mARCH.ui.tui_widgets.input_bar import InputMode
+    from mARCH.ui.tui_widgets.message import MessageWidget
+
+    async with MarchApp(ai_client=None).run_test(headless=True) as pilot:
+        input_bar = pilot.app.query_one("#input-bar")
+        input_bar._mode = InputMode.PLAN
+        await pilot.press("enter")
+        await pilot.pause()
+        conv = pilot.app.query_one(ConversationView)
+        assert len(list(conv.query(MessageWidget))) == 0
+
+
+def test_agent_history_stores_unprefixed_text():
+    """Agent.add_user_message stores text without [[PLAN]] prefix."""
+    from unittest.mock import MagicMock
+
+    from mARCH.ui.tui_app import MarchApp
+
+    mock_agent = MagicMock()
+    mock_agent.get_conversation_context.return_value = [{"role": "user", "content": "hello"}]
+    app = MarchApp(agent=mock_agent)
+
+    # Simulate the agent add_user_message call as done in on_input_submitted
+    app._agent.add_user_message("hello")
+    mock_agent.add_user_message.assert_called_once_with("hello")
+

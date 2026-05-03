@@ -121,6 +121,37 @@ class BashTaskExecutor(TaskExecutor):
                 duration=duration,
             )
 
+    async def _read_stream(
+        self,
+        stream: asyncio.StreamReader,
+        buffer: list[bytes],
+        size_tracker: list[int],
+    ) -> str | None:
+        """Read a stream into buffer, overflowing to disk when MAX_OUTPUT_SIZE is exceeded.
+
+        Args:
+            stream: Async stream to read from
+            buffer: Accumulator for in-memory bytes
+            size_tracker: Single-element list holding current byte count (mutable)
+
+        Returns:
+            Path to overflow temp file, or None if no overflow occurred.
+        """
+        output_file: str | None = None
+        while True:
+            line = await stream.readline()
+            if not line:
+                break
+            if size_tracker[0] + len(line) > self.MAX_OUTPUT_SIZE:
+                if output_file is None:
+                    output_file = self._create_temp_output_file()
+                with open(output_file, "ab") as f:
+                    f.write(line)
+            else:
+                buffer.append(line)
+                size_tracker[0] += len(line)
+        return output_file
+
     async def _run_command_streaming(
         self, command: str, working_directory: str | None = None, use_shell: bool = False
     ) -> dict:
@@ -159,51 +190,19 @@ class BashTaskExecutor(TaskExecutor):
 
             self._current_process = process
 
-            # Stream output with size tracking
-            stdout_buffer = []
-            stderr_buffer = []
-            stdout_size = 0
-            stderr_size = 0
-            output_file = None
+            stdout_buffer: list[bytes] = []
+            stderr_buffer: list[bytes] = []
 
-            # Read stdout
-            while True:
-                line = await process.stdout.readline()
-                if not line:
-                    break
-
-                # Check if we need to overflow to disk
-                if stdout_size + len(line) > self.MAX_OUTPUT_SIZE:
-                    # Overflow to disk
-                    if not output_file:
-                        output_file = self._create_temp_output_file()
-                    with open(output_file, "ab") as f:
-                        f.write(line)
-                else:
-                    stdout_buffer.append(line)
-                    stdout_size += len(line)
-
-            # Read stderr
-            try:
-                while True:
-                    line = await process.stderr.readline()
-                    if not line:
-                        break
-
-                    if stderr_size + len(line) > self.MAX_OUTPUT_SIZE:
-                        if not output_file:
-                            output_file = self._create_temp_output_file()
-                        with open(output_file, "ab") as f:
-                            f.write(b"STDERR: " + line)
-                    else:
-                        stderr_buffer.append(line)
-                        stderr_size += len(line)
-            except Exception:
-                pass
+            stdout_file, stderr_file = await asyncio.gather(
+                self._read_stream(process.stdout, stdout_buffer, [0]),
+                self._read_stream(process.stderr, stderr_buffer, [0]),
+            )
 
             await process.wait()
 
             self._current_process = None
+
+            output_file = stdout_file or stderr_file
 
             return {
                 "return_code": process.returncode,

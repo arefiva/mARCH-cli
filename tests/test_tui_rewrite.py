@@ -893,3 +893,160 @@ def test_agent_history_stores_unprefixed_text():
     app._agent.add_user_message("hello")
     mock_agent.add_user_message.assert_called_once_with("hello")
 
+
+# ============================================================================
+# Feature/mode-toggle: US-003 — System prompt injection for plan/autopilot modes
+# ============================================================================
+
+
+class TestPlanModeConstants:
+    """Tests for PLAN_MODE_SYSTEM_PROMPT and AUTOPILOT_SYSTEM_PROMPT constants."""
+
+    def test_plan_mode_system_prompt_importable(self):
+        """PLAN_MODE_SYSTEM_PROMPT is importable from mARCH.core.plan_mode."""
+        from mARCH.core.plan_mode import PLAN_MODE_SYSTEM_PROMPT
+
+        assert PLAN_MODE_SYSTEM_PROMPT is not None
+
+    def test_plan_mode_system_prompt_contains_required_substrings(self):
+        """PLAN_MODE_SYSTEM_PROMPT contains [[PLAN]], 'plan mode', and 'plan.md'."""
+        from mARCH.core.plan_mode import PLAN_MODE_SYSTEM_PROMPT
+
+        assert "[[PLAN]]" in PLAN_MODE_SYSTEM_PROMPT
+        assert "plan mode" in PLAN_MODE_SYSTEM_PROMPT
+        assert "plan.md" in PLAN_MODE_SYSTEM_PROMPT
+
+    def test_autopilot_system_prompt_importable(self):
+        """AUTOPILOT_SYSTEM_PROMPT is importable from mARCH.core.plan_mode."""
+        from mARCH.core.plan_mode import AUTOPILOT_SYSTEM_PROMPT
+
+        assert AUTOPILOT_SYSTEM_PROMPT is not None
+
+    def test_autopilot_system_prompt_contains_required_substrings(self):
+        """AUTOPILOT_SYSTEM_PROMPT contains 'non-interactive mode' and 'autonomously'."""
+        from mARCH.core.plan_mode import AUTOPILOT_SYSTEM_PROMPT
+
+        assert "non-interactive mode" in AUTOPILOT_SYSTEM_PROMPT
+        assert "autonomously" in AUTOPILOT_SYSTEM_PROMPT
+
+
+class TestBuildModeSystemPrompt:
+    """Tests for build_mode_system_prompt function."""
+
+    def test_plan_mode_appends_plan_prompt(self):
+        """build_mode_system_prompt with PLAN appends plan mode block."""
+        from mARCH.core.plan_mode import build_mode_system_prompt
+        from mARCH.ui.tui_widgets.input_bar import InputMode
+
+        result = build_mode_system_prompt("base", InputMode.PLAN)
+        assert "[[PLAN]]" in result
+        assert "plan mode" in result
+        assert "plan.md" in result
+        assert result.startswith("base")
+
+    def test_autopilot_mode_prepends_autopilot_prompt(self):
+        """build_mode_system_prompt with AUTOPILOT prepends autopilot paragraph."""
+        from mARCH.core.plan_mode import build_mode_system_prompt
+        from mARCH.ui.tui_widgets.input_bar import InputMode
+
+        result = build_mode_system_prompt("base", InputMode.AUTOPILOT)
+        assert "non-interactive mode" in result
+        assert "autonomously" in result
+        assert result.index("non-interactive mode") < result.index("base")
+
+    def test_interactive_mode_returns_base_unchanged(self):
+        """build_mode_system_prompt with INTERACTIVE returns base unchanged."""
+        from mARCH.core.plan_mode import build_mode_system_prompt
+        from mARCH.ui.tui_widgets.input_bar import InputMode
+
+        result = build_mode_system_prompt("base prompt", InputMode.INTERACTIVE)
+        assert result == "base prompt"
+
+    def test_no_circular_import(self):
+        """build_mode_system_prompt can be imported without circular import error."""
+        import subprocess
+        import sys
+
+        result = subprocess.run(
+            [sys.executable, "-c", "from mARCH.core.plan_mode import build_mode_system_prompt"],
+            capture_output=True,
+        )
+        assert result.returncode == 0
+
+    def test_plan_mode_detector_unchanged(self):
+        """PlanModeDetector.is_plan_request and extract_content still work."""
+        from mARCH.core.plan_mode import PlanModeDetector
+
+        assert PlanModeDetector.is_plan_request("[[PLAN]] hello") is True
+        assert PlanModeDetector.is_plan_request("hello") is False
+        assert PlanModeDetector.extract_content("[[PLAN]] hello") == "hello"
+        assert PlanModeDetector.extract_content("hello") == "hello"
+
+
+@pytest.mark.asyncio
+async def test_stream_ai_response_plan_mode_system_prompt():
+    """_stream_ai_response in PLAN mode sends a system message with [[PLAN]] and 'plan mode'."""
+    from unittest.mock import MagicMock
+
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.input_bar import InputMode
+
+    captured_messages: list = []
+
+    mock_agent = MagicMock()
+    mock_agent.get_conversation_context.return_value = [
+        {"role": "system", "content": "You are an assistant."},
+        {"role": "user", "content": "hello"},
+    ]
+
+    def capture_and_stream(messages):
+        captured_messages.extend(messages)
+        return iter([])
+
+    mock_client = MagicMock()
+    mock_client.stream_chat.side_effect = capture_and_stream
+
+    async with MarchApp(ai_client=mock_client, agent=mock_agent).run_test(headless=True) as pilot:
+        pilot.app._stream_ai_response("hello", InputMode.PLAN)
+        await pilot.pause(delay=0.5)
+
+    system_msgs = [m for m in captured_messages if m["role"] == "system"]
+    assert len(system_msgs) >= 1
+    sys_content = system_msgs[0]["content"]
+    assert "[[PLAN]]" in sys_content
+    assert "plan mode" in sys_content
+
+
+@pytest.mark.asyncio
+async def test_stream_ai_response_autopilot_mode_system_prompt():
+    """_stream_ai_response in AUTOPILOT mode sends a system message with autopilot content."""
+    from unittest.mock import MagicMock
+
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.input_bar import InputMode
+
+    captured_messages: list = []
+
+    mock_agent = MagicMock()
+    mock_agent.get_conversation_context.return_value = [
+        {"role": "system", "content": "You are an assistant."},
+        {"role": "user", "content": "hello"},
+    ]
+
+    def capture_and_stream(messages):
+        captured_messages.extend(messages)
+        return iter([])
+
+    mock_client = MagicMock()
+    mock_client.stream_chat.side_effect = capture_and_stream
+
+    async with MarchApp(ai_client=mock_client, agent=mock_agent).run_test(headless=True) as pilot:
+        pilot.app._stream_ai_response("hello", InputMode.AUTOPILOT)
+        await pilot.pause(delay=0.5)
+
+    system_msgs = [m for m in captured_messages if m["role"] == "system"]
+    assert len(system_msgs) >= 1
+    sys_content = system_msgs[0]["content"]
+    assert "non-interactive mode" in sys_content
+    assert "autonomously" in sys_content
+

@@ -12,6 +12,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.widgets import Footer, Header, Input
 
+from mARCH.core.plan_mode import build_mode_system_prompt
 from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType
 from mARCH.ui.tui_widgets import ConversationView, InputBar
 from mARCH.ui.tui_widgets.input_bar import InputMode
@@ -167,6 +168,15 @@ class MarchApp(App[None]):
                 if messages[i]["role"] == "user":
                     messages[i] = {**messages[i], "content": f"[[PLAN]] {user_text}"}
                     break
+        # Inject mode-specific system prompt section
+        sys_idx = next((i for i, m in enumerate(messages) if m["role"] == "system"), None)
+        if sys_idx is not None:
+            messages[sys_idx] = {
+                **messages[sys_idx],
+                "content": build_mode_system_prompt(messages[sys_idx]["content"], mode),
+            }
+        else:
+            messages.insert(0, {"role": "system", "content": build_mode_system_prompt("", mode)})
         full_response = ""
         try:
             for chunk in self._ai_client.stream_chat(messages):

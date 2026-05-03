@@ -1,21 +1,25 @@
-# Feature Context — copilot-cli-python
+# Feature Context — mARCH CLI
 
-> Fix 5 issues from code review: shell injection, zombie processes, deadlock, ambiguous edits, temp file leak
+> Port rich system prompt architecture from JS Copilot CLI to Python CLI — identity, guidelines, code change rules, memory injection, context compaction, custom instructions, and mode-specific messages.
 
 > **Auto-generated sections below — custom sections are preserved.**
 > Add custom notes in the 'Custom Context' section at the bottom.
 
 ## Story Groups
 
-### All Stories
-- **US-001**: Mitigate shell injection in bash executor (priority 1)
-- **US-002**: Kill subprocess on timeout and clean up temp files (priority 2)
-- **US-003**: Read stdout and stderr concurrently to prevent deadlock (priority 3)
-- **US-004**: Reject ambiguous multi-match file edits (priority 1)
+### System
+- **PS-001**: Core system prompt builder with all static sections (priority 1)
+- **PS-003**: Memory system prompt injection (priority 3)
+
+### Context
+- **PS-002**: Environment context and custom instructions (priority 2)
+- **PS-004**: Context compaction and summarization (priority 4)
+- **PS-005**: Autopilot mode context injection and utility messages (priority 5)
 
 ## Schema Extensions
 
-_No schema field references detected in acceptance criteria._
+- `compact_if_needed`
+- `get_conversation_context`
 
 ## Cross-Module Touch Points
 

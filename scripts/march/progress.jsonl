@@ -83,3 +83,17 @@
 {"timestamp": "2026-05-03T09:22:18.369782+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix subprocess resource leak on stream failure", "model": "claude-sonnet-4.6", "complexity": "standard"}
 {"timestamp": "2026-05-03T09:24:11.675497+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 113.3, "estimated_output_tokens": 479, "premium_requests": 1}
 {"timestamp": "2026-05-03T09:24:11.676482+00:00", "event": "run_completed", "result": "all_stories_passed"}
+{"timestamp": "2026-05-03T12:49:22.003643+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T12:49:56.633591+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T12:49:56.640269+00:00", "event": "run_started", "project": "mARCH CLI", "branch": "feature/prompt-system", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T12:49:56.640483+00:00", "event": "quality_gate_start", "trace_id": "ebfc21a89914", "span_id": "4c1a2a4bc07b", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T12:49:56.640658+00:00", "event": "mcp_check", "trace_id": "ebfc21a89914", "span_id": "4c1a2a4bc07b", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T12:49:56.640765+00:00", "event": "quality_gate_end", "trace_id": "ebfc21a89914", "span_id": "4c1a2a4bc07b", "parent_span_id": null, "status": "ok", "duration_ms": 0.3, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T12:49:56.644976+00:00", "event": "session_started", "story_id": "PS-001", "session": 1, "attempt": 1, "title": "Core system prompt builder with all static sections", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T12:55:58.418746+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 361.8, "estimated_output_tokens": 1788, "premium_requests": 1}
+{"timestamp": "2026-05-03T13:00:58.844578+00:00", "event": "token_usage", "model": "claude-opus-4.6", "duration_seconds": 300.4, "estimated_output_tokens": 2472, "premium_requests": 1}
+{"timestamp": "2026-05-03T13:03:36.108928+00:00", "event": "token_usage", "model": "claude-opus-4.6", "duration_seconds": 157.3, "estimated_output_tokens": 941, "premium_requests": 1}
+{"timestamp": "2026-05-03T13:03:36.109138+00:00", "event": "review_fixes_planned", "branch": "feature/prompt-system"}
+{"timestamp": "2026-05-03T13:03:36.112489+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix race condition and process leak in BashTaskExecutor", "model": "claude-sonnet-4.6", "complexity": "complex"}
+{"timestamp": "2026-05-03T13:08:32.410440+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 296.3, "estimated_output_tokens": 2305, "premium_requests": 1}
+{"timestamp": "2026-05-03T13:08:32.411334+00:00", "event": "run_completed", "result": "all_stories_passed"}

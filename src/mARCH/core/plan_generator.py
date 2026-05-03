@@ -3,7 +3,7 @@
 Generates structured plans from user requests using the AI agent.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from mARCH.core.agent_state import Agent
 
@@ -19,7 +19,7 @@ class PlanGenerator:
         """
         self.agent = agent
 
-    async def generate_plan(self, request: str) -> Dict[str, Any]:
+    async def generate_plan(self, request: str) -> dict[str, Any]:
         """Generate structured plan from user request.
 
         Args:
@@ -35,18 +35,6 @@ class PlanGenerator:
                 "success_criteria": ["criterion1", ...]
             }
         """
-        # Build system prompt for plan generation
-        plan_system_prompt = """You are an expert at creating detailed implementation plans.
-        
-When asked to create a plan, respond with a JSON structure containing:
-- summary: A one-line brief description
-- approach: 2-3 paragraph detailed approach
-- tasks: List of specific tasks to complete
-- estimated_effort: Time estimate (e.g., "2-4 hours")
-- success_criteria: List of success criteria to verify completion
-
-Keep the plan focused, actionable, and realistic."""
-
         # For now, return a template plan structure
         # In a full implementation, this would call the agent's LLM
         plan = {

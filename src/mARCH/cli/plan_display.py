@@ -3,7 +3,7 @@
 Displays structured plans and collects user action selection.
 """
 
-from typing import Any, Dict, Literal
+from typing import Any, Literal
 
 from rich.console import Console
 from rich.panel import Panel
@@ -18,7 +18,7 @@ class PlanApprovalUI:
     """Display plan and get user approval action."""
 
     @staticmethod
-    def display_plan(plan: Dict[str, Any]) -> None:
+    def display_plan(plan: dict[str, Any]) -> None:
         """Display structured plan using Rich formatting.
 
         Args:
@@ -92,7 +92,7 @@ class PlanResultDisplay:
     """Display plan execution results."""
 
     @staticmethod
-    def display_results(results: Dict[str, Any]) -> None:
+    def display_results(results: dict[str, Any]) -> None:
         """Display plan execution results with colored output.
 
         Args:

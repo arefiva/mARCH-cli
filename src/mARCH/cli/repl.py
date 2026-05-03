@@ -1,6 +1,11 @@
 """REPL wrapper for mARCH CLI using prompt-toolkit for rich input handling.
 
 Provides arrow key navigation, command history, and proper terminal input support.
+
+.. deprecated::
+    This module is superseded by :mod:`mARCH.ui.tui_widgets.input_bar` (InputBar
+    widget) in the Textual TUI rewrite.  It is kept for backward compatibility but
+    will be removed in a future release.
 """
 
 from pathlib import Path

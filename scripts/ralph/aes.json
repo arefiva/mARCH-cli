@@ -1,58 +1,255 @@
 {
   "project": "copilot-cli-python",
-  "branchName": "feature/reduce-context-overhead",
-  "description": "Remove non-standard fields from AES files and document context reduction strategy to prevent agent memory spikes",
-  "_source": "tasks/prd-reduce-context-overhead/prd.md",
+  "branchName": "feature/tui-rewrite",
+  "description": "Rewrite the mARCH TUI from Rich/prompt_toolkit to Textual, providing a reactive widget tree with modals, streaming, themes, and proper async support",
+  "_source": "tasks/prd-tui-rewrite/prd.md",
   "userStories": [
     {
-      "id": "US-001",
-      "title": "Clean Up AES Files",
-      "description": "As a developer using mARCH, I want AES files to contain only standard schema fields so that context isn't bloated with redundant metadata.",
+      "id": "TUI-001",
+      "title": "Textual App Scaffold + Core Layout",
+      "description": "As a developer using mARCH, I want the TUI to run as a Textual App with a structured layout so that I have a stable foundation for all UI widgets.",
       "priority": 1,
-      "complexity": "trivial",
-      "riskLevel": "low",
+      "complexity": "standard",
+      "riskLevel": "medium",
       "preferredModel": "claude-sonnet-4.6",
       "dependsOn": [],
-      "notes": "The securityWarnings and memoryConstraints fields were well-intentioned but agents ignored them. Guardrails now live in .copilot/instructions.md.",
+      "notes": "This is the foundation story. Keep old TUI code intact — wire new app as the default entry point but don't delete existing files.",
       "implementationNotes": [
-        "Remove `securityWarnings` array from scripts/march/aes.json (this is a non-standard field)",
-        "Remove `memoryConstraints` object from scripts/march/aes.json (this is a non-standard field)",
-        "Verify remaining structure matches AES schema: project, branchName, description, _source, userStories",
-        "Run AES validation: python .github/skills/aes/validate_aes.py",
-        "Check scripts/ralph/aes.json also has no non-standard fields (if it exists)"
+        "Create src/mARCH/ui/tui_app.py with MarchApp(App) class using Textual CSS for vertical layout: Header | ConversationArea | InputBar | Footer",
+        "Create src/mARCH/ui/tui_widgets/__init__.py as the widget package with re-exports",
+        "Mount placeholder Static widgets for each layout zone so the app renders immediately",
+        "Handle on_key for Ctrl+C and Ctrl+D to exit cleanly via self.exit()",
+        "Update src/mARCH/cli/cli.py to call MarchApp().run() instead of the old TUI entry point, keeping old code importable"
       ],
       "acceptanceCriteria": [
-        "scripts/march/aes.json contains only schema-defined fields (project, branchName, description, _source, userStories)",
-        "No securityWarnings field present in any AES file under scripts/",
-        "No memoryConstraints field present in any AES file under scripts/",
-        "AES validation passes: python .github/skills/aes/validate_aes.py exits 0",
+        "MarchApp class exists in src/mARCH/ui/tui_app.py and subclasses textual.app.App",
+        "App launches with 4 visible layout zones (header, conversation, input, footer)",
+        "Ctrl+C and Ctrl+D exit the app cleanly without traceback",
+        "src/mARCH/ui/tui_widgets/__init__.py exists and is importable",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
       "passes": false
     },
     {
-      "id": "US-002",
-      "title": "Document Context Reduction Strategy",
-      "description": "As a developer, I want clear documentation of how agents receive guardrails so that future contributors don't re-add inline warnings.",
+      "id": "TUI-002",
+      "title": "Header & Banner Widget",
+      "description": "As a user, I want to see the project name, version, and mode indicator in a header bar so that I always know what mode I'm in.",
       "priority": 2,
       "complexity": "trivial",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["US-001"],
-      "notes": "This documents the decision so future maintainers understand why AES files should stay minimal.",
+      "dependsOn": ["TUI-001"],
+      "notes": "Use importlib.metadata to get version. ASCII mascot is optional decoration — hide it on narrow terminals.",
       "implementationNotes": [
-        "Open scripts/march/DECISIONS.md and add a new section '## Context Reduction Strategy'",
-        "Document that .copilot/instructions.md now provides meta-project guardrails",
-        "Explain that AES files should not contain custom fields beyond the schema",
-        "Reference the memory spike root cause: meta-project confusion where agents read prompt files",
-        "Note that inline securityWarnings were ineffective and removed"
+        "Create src/mARCH/ui/tui_widgets/header.py with HeaderWidget(Static) class",
+        "Display project name 'mARCH', version from importlib.metadata, and current mode string",
+        "Include a simple ASCII mascot as static text; hide it when terminal width < 80 columns using Textual CSS media queries or reactive sizing",
+        "Wire into tui_app.py by replacing the header placeholder widget in compose()"
       ],
       "acceptanceCriteria": [
-        "scripts/march/DECISIONS.md contains section titled 'Context Reduction Strategy' or similar",
-        "Section explains that .copilot/instructions.md replaces inline warnings in AES files",
-        "Section warns against adding custom fields to AES files",
-        "Section references root cause: agents treating source code prompts as instructions",
+        "HeaderWidget renders project name 'mARCH' and version string",
+        "Mode indicator displays current mode text (e.g., INTERACTIVE)",
+        "Widget degrades gracefully when terminal width is less than 80 columns",
+        "Unit test verifies header content includes 'mARCH'",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "TUI-003",
+      "title": "Message Display Widget",
+      "description": "As a user, I want to see conversation messages rendered with role labels, markdown, and syntax-highlighted code blocks so that the conversation is readable.",
+      "priority": 2,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["TUI-001"],
+      "notes": "Use Textual's built-in Markdown widget for rich content rendering. Role colors should come from the theme system once TUI-009 lands, but hardcode for now.",
+      "implementationNotes": [
+        "Create src/mARCH/ui/tui_widgets/conversation.py with ConversationView(VerticalScroll) as the scrollable message container",
+        "Create src/mARCH/ui/tui_widgets/message.py with MessageWidget(Static) for individual messages with role label and content",
+        "Support roles USER, ASSISTANT, SYSTEM, TOOL — each with a distinct label and color",
+        "Use Textual Markdown widget or Rich markup for markdown rendering including fenced code blocks with syntax highlighting",
+        "Auto-scroll to bottom on new message mount; show placeholder text when conversation is empty"
+      ],
+      "acceptanceCriteria": [
+        "ConversationView renders a list of MessageWidget instances",
+        "Each message displays role label (USER/ASSISTANT/SYSTEM/TOOL) with distinct color",
+        "Code blocks render with syntax highlighting",
+        "View auto-scrolls to the newest message when a new one is appended",
+        "Empty conversation shows a placeholder message rather than blank space",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "TUI-004",
+      "title": "Input Widget + Mode Cycling",
+      "description": "As a user, I want an input bar with mode cycling so that I can switch between INTERACTIVE, PLAN, AUTOPILOT, and SHELL modes without leaving the keyboard.",
+      "priority": 2,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["TUI-001"],
+      "notes": "Match existing repl.py Shift+Tab cycling behavior. Don't delete repl.py — mark it deprecated.",
+      "implementationNotes": [
+        "Create src/mARCH/ui/tui_widgets/input_bar.py with InputBar(Widget) containing a Textual Input child widget and a mode label",
+        "Mode indicator shows current mode with color: INTERACTIVE(cyan), PLAN(yellow), AUTOPILOT(green), SHELL(red)",
+        "Bind Shift+Tab (backtab) to cycle modes in order: INTERACTIVE → PLAN → AUTOPILOT → SHELL → INTERACTIVE",
+        "Enter submits input text and clears field; Ctrl+C interrupts; Ctrl+N toggles multiline",
+        "Wire into tui_app.py replacing the input placeholder; add deprecation comment to src/mARCH/cli/repl.py"
+      ],
+      "acceptanceCriteria": [
+        "InputBar widget renders with mode label and text input field",
+        "Shift+Tab cycles modes in order: INTERACTIVE → PLAN → AUTOPILOT → SHELL → INTERACTIVE",
+        "Enter key submits the input text and clears the field",
+        "Mode indicator color changes per mode (cyan/yellow/green/red)",
+        "Unit test verifies mode cycling logic returns correct next mode",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "TUI-005",
+      "title": "Streaming Response Display",
+      "description": "As a user, I want AI responses to stream token-by-token into the conversation view so that I see output in real time without flicker.",
+      "priority": 3,
+      "complexity": "complex",
+      "riskLevel": "medium",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["TUI-003"],
+      "notes": "This is the most technically challenging story — async streaming into a reactive widget must be flicker-free. Use Textual Worker pattern.",
+      "implementationNotes": [
+        "Add append_chunk(text: str) method to MessageWidget in src/mARCH/ui/tui_widgets/message.py that reactively updates content using Textual reactive or call_from_thread",
+        "Update ConversationView in src/mARCH/ui/tui_widgets/conversation.py to create a placeholder ASSISTANT MessageWidget when streaming starts",
+        "Use Textual Worker pattern in tui_app.py for the async AI call + streaming loop that feeds chunks to append_chunk",
+        "Update src/mARCH/core/agent_state.py to provide a streaming callback hook compatible with the new TUI",
+        "Ensure no cursor artifacts or flicker by batching updates and using Textual's built-in refresh mechanism"
+      ],
+      "acceptanceCriteria": [
+        "append_chunk method exists on MessageWidget and updates displayed content reactively",
+        "Streaming tokens appear incrementally in the conversation view without full re-render",
+        "Worker pattern properly handles async streaming lifecycle (start, stream, complete, error)",
+        "No visible flicker or cursor artifacts during rapid streaming updates",
+        "Unit test verifies append_chunk accumulates text correctly across multiple calls",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "TUI-006",
+      "title": "Tool Call Approval Modal",
+      "description": "As a user, I want a modal dialog for tool call approvals so that I can review and approve or deny tool executions with keyboard shortcuts.",
+      "priority": 3,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["TUI-001", "TUI-004"],
+      "notes": "This modal blocks the main app until the user responds. Use Textual's push_screen/dismiss pattern.",
+      "implementationNotes": [
+        "Create src/mARCH/ui/tui_widgets/tool_modal.py with ToolModal(ModalScreen) class",
+        "Display tool name, description, and formatted arguments in a bordered panel",
+        "Bind keyboard shortcuts: y=yes_once, a=always, n=deny, Esc=deny — call self.dismiss(result) for each",
+        "Support arrow up/down navigation between options and number shortcuts 1/2/3/4 as alternative selection",
+        "Integrate in tui_app.py via self.push_screen(ToolModal(tool_info), callback) pattern"
+      ],
+      "acceptanceCriteria": [
+        "ToolModal subclasses textual.screen.ModalScreen",
+        "Modal displays tool name, description, and arguments in a readable layout",
+        "Keyboard shortcut 'y' dismisses with 'yes_once' result",
+        "Keyboard shortcut 'a' dismisses with 'always' result",
+        "Keyboard shortcut 'n' or Esc dismisses with 'deny' result",
+        "Unit test verifies dismiss values for each keyboard shortcut",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "TUI-007",
+      "title": "Status Indicators + Animated Spinners",
+      "description": "As a user, I want animated spinners and status indicators so that I know when the system is processing and can see success, error, or warning states.",
+      "priority": 3,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["TUI-003"],
+      "notes": "Braille spinner is the default. Status bar replaces the footer placeholder.",
+      "implementationNotes": [
+        "Create src/mARCH/ui/tui_widgets/spinners.py with SpinnerWidget(Static) that uses set_interval for animation at ~100ms",
+        "Spinner frames: braille pattern ⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ cycling through on each timer tick",
+        "Create src/mARCH/ui/tui_widgets/status_bar.py with StatusBar(Static) showing operation text and status icon",
+        "Status icons: ✓ (success/green), ✗ (error/red), ⚠ (warning/yellow), ● (info/blue)",
+        "Wire status bar into tui_app.py footer zone, replacing the footer placeholder"
+      ],
+      "acceptanceCriteria": [
+        "SpinnerWidget animates through braille frames on a timer interval",
+        "StatusBar displays current operation text with the appropriate status icon",
+        "Status icons map correctly: success=✓, error=✗, warning=⚠, info=●",
+        "Spinner stops and clears when the associated operation completes",
+        "Unit test verifies spinner frame cycling returns correct sequence",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "TUI-008",
+      "title": "Plan Mode Display Modal",
+      "description": "As a user, I want a modal for viewing and acting on plans so that I can review plan summaries and choose an execution action.",
+      "priority": 4,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["TUI-001", "TUI-004"],
+      "notes": "This replaces the current plan_display.py approval flow. Keep old code until this modal is proven.",
+      "implementationNotes": [
+        "Create src/mARCH/ui/tui_widgets/plan_modal.py with PlanModal(ModalScreen) class",
+        "Display plan summary rendered as markdown and a task list using Textual Markdown widget",
+        "Bind keyboard shortcuts: e=exit_only, i=interactive, a=autopilot, f=autopilot_fleet — call self.dismiss(action) for each",
+        "Return selected action string via dismiss() to the calling app callback",
+        "Replace current plan_display.py approval flow by wiring PlanModal into tui_app.py"
+      ],
+      "acceptanceCriteria": [
+        "PlanModal subclasses textual.screen.ModalScreen",
+        "Modal renders plan summary as formatted markdown",
+        "Keyboard shortcut 'e' dismisses with 'exit_only'",
+        "Keyboard shortcut 'i' dismisses with 'interactive'",
+        "Keyboard shortcut 'a' dismisses with 'autopilot'",
+        "Keyboard shortcut 'f' dismisses with 'autopilot_fleet'",
+        "Unit test verifies dismiss values for each action shortcut",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "TUI-009",
+      "title": "Theme System + Color Constants",
+      "description": "As a developer, I want a centralized theme and color system so that all widgets use consistent brand colors and support future light/dark mode toggling.",
+      "priority": 4,
+      "complexity": "trivial",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["TUI-001"],
+      "notes": "This is a pure data/utility story with no UI side effects. Other widgets adopt it once it lands.",
+      "implementationNotes": [
+        "Create src/mARCH/ui/theme.py with a Theme dataclass containing color fields: brand, text, background, accent, border, statusSuccess, statusError, statusWarning, statusInfo, and per-mode colors",
+        "Create src/mARCH/ui/colors.py with named color constants as strings (hex or named) for brand, selected, each status type, and each mode (cyan/yellow/green/red)",
+        "Provide get_theme(dark: bool = True) function returning the active Theme instance (dark mode default, light mode available)",
+        "Wire brand color into header, borders, and mode indicator across widgets that already exist"
+      ],
+      "acceptanceCriteria": [
+        "Theme dataclass exists in src/mARCH/ui/theme.py with documented color fields",
+        "src/mARCH/ui/colors.py exports named color constants for brand, status, and mode colors",
+        "get_theme() returns a valid Theme instance with all required color fields populated",
+        "Dark mode is the default; get_theme(dark=False) returns a light mode variant",
+        "Unit test verifies get_theme() returns expected color values for both modes",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],

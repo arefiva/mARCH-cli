@@ -1,0 +1,62 @@
+{
+  "project": "copilot-cli-python",
+  "branchName": "feature/reduce-context-overhead",
+  "description": "Remove non-standard fields from AES files and document context reduction strategy to prevent agent memory spikes",
+  "_source": "tasks/prd-reduce-context-overhead/prd.md",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Clean Up AES Files",
+      "description": "As a developer using mARCH, I want AES files to contain only standard schema fields so that context isn't bloated with redundant metadata.",
+      "priority": 1,
+      "complexity": "trivial",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [],
+      "notes": "The securityWarnings and memoryConstraints fields were well-intentioned but agents ignored them. Guardrails now live in .copilot/instructions.md.",
+      "implementationNotes": [
+        "Remove `securityWarnings` array from scripts/march/aes.json (this is a non-standard field)",
+        "Remove `memoryConstraints` object from scripts/march/aes.json (this is a non-standard field)",
+        "Verify remaining structure matches AES schema: project, branchName, description, _source, userStories",
+        "Run AES validation: python .github/skills/aes/validate_aes.py",
+        "Check scripts/ralph/aes.json also has no non-standard fields (if it exists)"
+      ],
+      "acceptanceCriteria": [
+        "scripts/march/aes.json contains only schema-defined fields (project, branchName, description, _source, userStories)",
+        "No securityWarnings field present in any AES file under scripts/",
+        "No memoryConstraints field present in any AES file under scripts/",
+        "AES validation passes: python .github/skills/aes/validate_aes.py exits 0",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-002",
+      "title": "Document Context Reduction Strategy",
+      "description": "As a developer, I want clear documentation of how agents receive guardrails so that future contributors don't re-add inline warnings.",
+      "priority": 2,
+      "complexity": "trivial",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["US-001"],
+      "notes": "This documents the decision so future maintainers understand why AES files should stay minimal.",
+      "implementationNotes": [
+        "Open scripts/march/DECISIONS.md and add a new section '## Context Reduction Strategy'",
+        "Document that .copilot/instructions.md now provides meta-project guardrails",
+        "Explain that AES files should not contain custom fields beyond the schema",
+        "Reference the memory spike root cause: meta-project confusion where agents read prompt files",
+        "Note that inline securityWarnings were ineffective and removed"
+      ],
+      "acceptanceCriteria": [
+        "scripts/march/DECISIONS.md contains section titled 'Context Reduction Strategy' or similar",
+        "Section explains that .copilot/instructions.md replaces inline warnings in AES files",
+        "Section warns against adding custom fields to AES files",
+        "Section references root cause: agents treating source code prompts as instructions",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    }
+  ]
+}

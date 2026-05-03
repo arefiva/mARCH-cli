@@ -518,60 +518,10 @@ def main(
     console.print("[dim]Type /help for available commands[/dim]")
     console.print()
 
-    # Interactive loop
-    repl = get_repl(mode_manager=ctx.mode_manager)
-    try:
-        while True:
-            try:
-                # Get current mode for prompt display
-                current_mode = ctx.mode_manager.current_mode
+    # Launch Textual TUI
+    from mARCH.ui.tui_app import MarchApp
 
-                # Get user input with mode indicator in prompt
-                user_input = repl.get_input(mode=current_mode)
-
-                if not user_input:
-                    continue
-
-                # Check for mode change signal (Shift+Tab)
-                if user_input.startswith("__MODE_CHANGE__"):
-                    mode_value = user_input.split("__MODE_CHANGE__")[1]
-                    new_mode = ExecutionMode(mode_value)
-                    ctx.mode_manager.set_mode(new_mode)
-                    console.print(
-                        f"[green]✓[/green] Mode changed to: [bold]{mode_value}[/bold]"
-                    )
-                    continue
-
-                # Check for exit commands
-                if user_input.lower() in ("exit", "quit", ":q", "q!"):
-                    console.print("[yellow]Goodbye![/yellow]")
-                    break
-
-                # Check for [[PLAN]] prefix FIRST (before slash commands)
-                if PlanModeDetector.is_plan_request(user_input):
-                    asyncio.run(handle_plan_mode(ctx, user_input, ctx.mode_manager))
-                    continue
-
-                # Handle slash commands
-                if ctx.slash_parser.is_slash_command(user_input):
-                    handle_slash_command(ctx, user_input)
-                    continue
-
-                # Handle regular input - send to AI agent
-                handle_regular_input(ctx, user_input)
-
-            except KeyboardInterrupt:
-                console.print()
-                console.print("[yellow]Interrupted (use 'exit' to quit)[/yellow]")
-                continue
-
-    except EOFError:
-        console.print()
-        console.print("[yellow]Goodbye![/yellow]")
-    except Exception as e:
-        logger.error(f"Error in main loop: {e}")
-        console.print(f"[red]Error: {e}[/red]")
-        sys.exit(1)
+    MarchApp().run()
 
 
 def cli_main() -> None:

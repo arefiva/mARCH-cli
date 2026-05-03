@@ -1,17 +1,20 @@
 # Feature Context — copilot-cli-python
 
-> Fix 5 issues from code review: shell injection, zombie processes, deadlock, ambiguous edits, temp file leak
+> Rewrite the mARCH TUI from Rich/prompt_toolkit to Textual, providing a reactive widget tree with modals, streaming, themes, and proper async support
 
 > **Auto-generated sections below — custom sections are preserved.**
 > Add custom notes in the 'Custom Context' section at the bottom.
 
 ## Story Groups
 
-### All Stories
-- **US-001**: Mitigate shell injection in bash executor (priority 1)
-- **US-002**: Kill subprocess on timeout and clean up temp files (priority 2)
-- **US-003**: Read stdout and stderr concurrently to prevent deadlock (priority 3)
-- **US-004**: Reject ambiguous multi-match file edits (priority 1)
+### Widget
+- **TUI-002**: Header & Banner Widget (priority 2)
+- **TUI-003**: Message Display Widget (priority 2)
+- **TUI-004**: Input Widget + Mode Cycling (priority 2)
+
+### Response
+- **TUI-005**: Streaming Response Display (priority 3)
+- **TUI-008**: Plan Mode Display Modal (priority 4)
 
 ## Schema Extensions
 

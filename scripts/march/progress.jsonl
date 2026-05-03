@@ -83,3 +83,9 @@
 {"timestamp": "2026-05-03T09:22:18.369782+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix subprocess resource leak on stream failure", "model": "claude-sonnet-4.6", "complexity": "standard"}
 {"timestamp": "2026-05-03T09:24:11.675497+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 113.3, "estimated_output_tokens": 479, "premium_requests": 1}
 {"timestamp": "2026-05-03T09:24:11.676482+00:00", "event": "run_completed", "result": "all_stories_passed"}
+{"timestamp": "2026-05-03T14:19:40.478466+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T14:19:40.483713+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/tui-rewrite", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T14:19:40.483836+00:00", "event": "quality_gate_start", "trace_id": "8ac715cc1d1e", "span_id": "01a9bc648afa", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T14:19:40.483916+00:00", "event": "mcp_check", "trace_id": "8ac715cc1d1e", "span_id": "01a9bc648afa", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T14:19:40.484023+00:00", "event": "quality_gate_end", "trace_id": "8ac715cc1d1e", "span_id": "01a9bc648afa", "parent_span_id": null, "status": "ok", "duration_ms": 0.2, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T14:19:40.489908+00:00", "event": "session_started", "story_id": "TUI-001", "session": 1, "attempt": 1, "title": "Textual App Scaffold + Core Layout", "model": "claude-sonnet-4.6", "complexity": "standard"}

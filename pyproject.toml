@@ -118,6 +118,7 @@ packages = [
     "mARCH.code_intelligence",
     "mARCH.networking",
     "mARCH.ui",
+    "mARCH.ui.tui_widgets",
     "mARCH.platform",
     "mARCH.state",
     "mARCH.validation",
@@ -191,5 +192,5 @@ exclude_lines = [
 target-version = "py310"
 line-length = 100
 select = ["E", "F", "W", "I", "N", "UP", "RUF"]
-ignore = ["E501"]
+ignore = ["E501", "N999"]
 extend-exclude = [".venv", "venv", ".git", "dist", "build"]

@@ -119,3 +119,5 @@
 {"timestamp": "2026-05-03T17:03:46.214750+00:00", "event": "premature_complete_signal", "story_id": "US-001", "session": 1, "stories_done": 2}
 {"timestamp": "2026-05-03T17:03:46.214823+00:00", "event": "story_passed", "story_id": "US-001", "session": 1, "title": "Harden streaming error handling and add streaming tests", "model": "claude-sonnet-4.6"}
 {"timestamp": "2026-05-03T17:03:46.217742+00:00", "event": "session_started", "story_id": "US-003", "session": 2, "attempt": 1, "title": "Restore slash command dispatch and exit handling in TUI", "model": "claude-sonnet-4.6", "complexity": "complex"}
+{"timestamp": "2026-05-03T17:17:43.066366+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 836.8, "estimated_output_tokens": 4456, "premium_requests": 1}
+{"timestamp": "2026-05-03T17:17:43.067651+00:00", "event": "run_completed", "result": "all_stories_passed"}

@@ -7,7 +7,9 @@ from typing import ClassVar
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Footer, Header, Input
+
+from mARCH.ui.tui_widgets import ConversationView, InputBar
 
 
 class MarchApp(App[None]):
@@ -39,15 +41,13 @@ class MarchApp(App[None]):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
-        yield Static(
-            "Conversation area — messages will appear here",
-            id="conversation-area",
-        )
-        yield Static(
-            "Input bar — type your message here",
-            id="input-bar",
-        )
+        yield ConversationView(id="conversation-area")
+        yield InputBar(id="input-bar")
         yield Footer()
+
+    def on_mount(self) -> None:
+        """Focus the input field when the app starts."""
+        self.query_one("#march-input", Input).focus()
 
     def action_quit(self) -> None:
         """Exit the application cleanly."""

@@ -60,8 +60,8 @@ class InputBar(Widget):
         Binding("ctrl+n", "toggle_multiline", "Multiline", show=False),
     ]
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._mode = InputMode.INTERACTIVE
         self._mode_label: Label | None = None
         self._input: Input | None = None

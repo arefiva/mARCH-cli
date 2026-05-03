@@ -18,8 +18,8 @@ class ConversationView(VerticalScroll):
     }
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._placeholder: Static | None = None
         self._streaming_widget: MessageWidget | None = None
 

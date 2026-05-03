@@ -63,7 +63,9 @@ class InputBar(Widget):
     """
 
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("backtab", "cycle_mode", "Cycle mode", show=True),
+        Binding("backtab", "cycle_mode_interactive", "INTERACTIVE", show=True),
+        Binding("backtab", "cycle_mode_plan", "PLAN", show=True),
+        Binding("backtab", "cycle_mode_autopilot", "AUTOPILOT", show=True),
         Binding("ctrl+n", "toggle_multiline", "Multiline", show=False),
     ]
 
@@ -85,6 +87,16 @@ class InputBar(Widget):
         self._input = Input(placeholder="Type a message…", id="march-input")
         yield self._input
 
+    def check_action(self, action: str, parameters: tuple) -> bool | None:
+        """Show only the binding matching the current mode in the footer."""
+        if action == "cycle_mode_interactive":
+            return self._mode == InputMode.INTERACTIVE
+        if action == "cycle_mode_plan":
+            return self._mode == InputMode.PLAN
+        if action == "cycle_mode_autopilot":
+            return self._mode == InputMode.AUTOPILOT
+        return True
+
     def action_cycle_mode(self) -> None:
         """Cycle to the next input mode."""
         if self._mode_manager is not None:
@@ -100,6 +112,19 @@ class InputBar(Widget):
             color = MODE_COLORS[self._mode]
             self._mode_label.update(f"[{color}]{self._mode.value}[/]")
         self.post_message(InputBar.ModeChanged(self._mode))
+        self.refresh_bindings()
+
+    def action_cycle_mode_interactive(self) -> None:
+        """Cycle mode (bound when in INTERACTIVE mode)."""
+        self.action_cycle_mode()
+
+    def action_cycle_mode_plan(self) -> None:
+        """Cycle mode (bound when in PLAN mode)."""
+        self.action_cycle_mode()
+
+    def action_cycle_mode_autopilot(self) -> None:
+        """Cycle mode (bound when in AUTOPILOT mode)."""
+        self.action_cycle_mode()
 
     def action_toggle_multiline(self) -> None:
         """Toggle multiline input (no-op in this scaffold)."""

@@ -7,6 +7,7 @@
 |-------|----------|-----------|
 | US-001: Fix Shift+Tab Mode Switching | — | — |
 | US-002: Verify Plan Mode Workflow Integration | — | — |
+| US-003: Verify Cleanup and Validate Coverage | — | — |
 | TUI-001: Textual App Scaffold + Core Layout | — | — |
 | TUI-002: Header & Banner Widget | — | — |
 | TUI-003: Message Display Widget | — | — |
@@ -16,5 +17,4 @@
 | TUI-007: Status Indicators + Animated Spinners | — | — |
 | TUI-008: Plan Mode Display Modal | — | — |
 | TUI-009: Theme System + Color Constants | — | — |
-| US-003: Verify Cleanup and Validate Coverage | — | — |
 | US-004: Reject ambiguous multi-match file edits | — | — |

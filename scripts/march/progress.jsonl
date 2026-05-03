@@ -121,3 +121,10 @@
 {"timestamp": "2026-05-03T17:03:46.217742+00:00", "event": "session_started", "story_id": "US-003", "session": 2, "attempt": 1, "title": "Restore slash command dispatch and exit handling in TUI", "model": "claude-sonnet-4.6", "complexity": "complex"}
 {"timestamp": "2026-05-03T17:17:43.066366+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 836.8, "estimated_output_tokens": 4456, "premium_requests": 1}
 {"timestamp": "2026-05-03T17:17:43.067651+00:00", "event": "run_completed", "result": "all_stories_passed"}
+{"timestamp": "2026-05-03T17:41:42.058131+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T17:41:42.063631+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/mode-toggle", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T17:41:42.063888+00:00", "event": "quality_gate_start", "trace_id": "03738e2d5882", "span_id": "55f45880e959", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T17:41:42.064085+00:00", "event": "mcp_check", "trace_id": "03738e2d5882", "span_id": "55f45880e959", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T17:41:42.064200+00:00", "event": "quality_gate_end", "trace_id": "03738e2d5882", "span_id": "55f45880e959", "parent_span_id": null, "status": "ok", "duration_ms": 0.3, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T17:41:42.069209+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Mode change notification via Textual message", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T17:53:11.519656+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 689.4, "estimated_output_tokens": 3549, "premium_requests": 1}

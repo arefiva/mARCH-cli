@@ -91,6 +91,14 @@
             "pattern": "^[A-Z]+-[0-9]+$"
           }
         },
+        "preservationConstraints": {
+          "type": "array",
+          "description": "Files, functions, or importable symbols that must NOT be deleted or broken by this story. Each entry is checked after the story completes: file paths must still exist, Python symbols must still be importable. Failing any entry causes the story to be treated as incomplete.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "notes": {
           "type": "string",
           "description": "Optional notes or context for the agent implementing this story"

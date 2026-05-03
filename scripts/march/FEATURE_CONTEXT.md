@@ -1,20 +1,15 @@
 # Feature Context — copilot-cli-python
 
-> Rewrite the mARCH TUI from Rich/prompt_toolkit to Textual, providing a reactive widget tree with modals, streaming, themes, and proper async support
+> Wire the existing InputBar and ConversationView widgets into MarchApp and implement the AI conversation dispatch loop so users can type, submit, and receive streaming AI responses in the Textual TUI.
 
 > **Auto-generated sections below — custom sections are preserved.**
 > Add custom notes in the 'Custom Context' section at the bottom.
 
 ## Story Groups
 
-### Widget
-- **TUI-002**: Header & Banner Widget (priority 2)
-- **TUI-003**: Message Display Widget (priority 2)
-- **TUI-004**: Input Widget + Mode Cycling (priority 2)
-
-### Response
-- **TUI-005**: Streaming Response Display (priority 3)
-- **TUI-008**: Plan Mode Display Modal (priority 4)
+### Marchapp
+- **US-001**: Wire real TUI widgets into MarchApp (priority 1)
+- **US-002**: AI conversation dispatch loop in MarchApp (priority 2)
 
 ## Schema Extensions
 
@@ -22,7 +17,7 @@ _No schema field references detected in acceptance criteria._
 
 ## Cross-Module Touch Points
 
-_No cross-module touch points detected._
+- `cli` — mentioned in US-002
 
 ## Known Constraints
 

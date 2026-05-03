@@ -1,6 +1,6 @@
 ---
 name: aes
-description: "Create an Autonomous Execution Specification (AES) for a new feature. Guides you through writing a PRD and immediately converts it to aes.json for autonomous execution. Use when planning a feature, starting a new project, or preparing work for the Ralph agent. Triggers on: create a prd, write prd for, plan this feature, requirements for, spec out, create aes, write aes for, aes for, convert this prd, turn this into ralph format, create aes.json from this, aes from this, ralph json."
+description: "Create an Autonomous Execution Specification (AES) for a new feature. Guides you through writing a PRD and immediately converts it to aes.json for autonomous execution. Use when planning a feature, starting a new project, or preparing work for the Ralph agent. Triggers on: create a prd, write prd for, plan this feature, requirements for, spec out, create aes, write aes for, aes for, convert this prd, turn this into march format, create aes.json from this, aes from this, ralph json."
 user-invocable: true
 ---
 
@@ -54,6 +54,7 @@ Each story needs:
 - **Description:** "As a [user], I want [feature] so that [benefit]"
 - **Implementation Notes:** Technical approach — which files to touch, patterns to follow, design decisions, gotchas to avoid. Provide as **multiple bullet points** (one per aspect). Be specific enough that an agent can start coding without additional research.
 - **Acceptance Criteria:** Written as test assertions, not descriptions. Ask yourself: *what would a failing test look like for this story?* Always include edge cases (empty input, boundary conditions, error paths).
+- **Preservation Constraints:** *(required when the story touches existing files)* An explicit list of files, functions, or importable symbols that must NOT be deleted or broken. See the Preservation Constraints section below.
 
 Each story should be small enough to implement in one focused session (3–5 files).
 
@@ -69,9 +70,14 @@ Each story should be small enough to implement in one focused session (3–5 fil
 - Gotchas or constraints to be aware of
 - Suggested implementation order within this story
 
+**Preservation Constraints** (if this story modifies existing files):
+- `src/module/existing_file.py` — must not be deleted
+- `src/module/existing_file.py::some_function` — must remain importable
+
 **Acceptance Criteria:**
 - [ ] Unit test verifies [function] returns [expected] when given [input]
 - [ ] Unit test covers edge case: [empty input / boundary / error path]
+- [ ] [Existing feature X] still works: [observable proof]
 - [ ] [Observable behavior criterion]
 - [ ] Build and tests pass
 ```
@@ -120,11 +126,16 @@ The AES output lives at `scripts/ralph/aes.json` with this structure:
         "Which files to touch",
         "Patterns to follow",
         "Key design decisions",
-        "Gotchas to avoid"
+        "Gotchas to avoid — use 'wrap' or 'call alongside' when existing code must be kept, never 'replace' or 'instead of'"
+      ],
+      "preservationConstraints": [
+        "src/module/existing_file.py",
+        "src/module/existing_file.py::existing_function"
       ],
       "acceptanceCriteria": [
         "Unit test verifies [function] returns [expected] when given [input]",
         "Unit test covers edge case: [empty input / boundary / error path]",
+        "[Existing feature X] still works: [observable proof]",
         "[Observable behavior criterion]",
         "[stack-specific build command] passes with no errors",
         "[stack-specific test command] passes with no failures"
@@ -166,7 +177,51 @@ The AES output lives at `scripts/ralph/aes.json` with this structure:
 | `implementationNotes` | ✅ | array | Non-empty array of implementation details (technical approach, files to touch, patterns, design decisions, gotchas) |
 | `acceptanceCriteria` | ✅ | array | Non-empty array of verifiable acceptance criteria (must include build+test gates as last items) |
 | `passes` | ✅ | boolean | Always `false` on creation; set to `true` by Ralph after implementation |
+| `preservationConstraints` | ❌ | array | Files or symbols that must NOT be deleted/broken. Required when a story touches existing files. Each entry is a file path (`src/a.py`) or a symbol (`src/a.py::func`). Ralph verifies these after the story completes. |
 | `notes` | ❌ | string | Optional additional context or notes for the implementing agent |
+
+---
+
+---
+
+## Preservation Constraints
+
+When a story **modifies existing files**, you must protect the functionality that should survive.
+
+### The "instead of" trap
+
+The most common cause of silent feature deletion is ambiguous phrasing in `implementationNotes`.
+
+❌ **Dangerous** — agent will delete the old code:
+> "Call `MarchApp().run()` instead of the old TUI entry point"
+
+✅ **Safe** — agent will keep the old code:
+> "In `cli.py`, add `MarchApp().run()` as the default path while keeping the existing REPL loop reachable via a `--legacy` flag or a fallback import"
+
+**Rule:** Never use "replace", "instead of", or "remove" in `implementationNotes` when the old code must be kept. Use "wrap", "call alongside", "add a condition", or "add a fallback".
+
+### Required acceptance criteria for modified files
+
+If a story touches an existing file, at least one criterion must verify existing behaviour:
+
+```
+"Existing src/module/cli.py::main() is still callable with no TypeError",
+"repl.get_input() still exists and returns a str",
+"All pre-existing tests in tests/test_cli.py continue to pass",
+```
+
+### The preservationConstraints field
+
+List every file path or symbol that must survive the story:
+
+```json
+"preservationConstraints": [
+  "src/mARCH/cli/repl.py",
+  "src/mARCH/cli/cli.py::main"
+]
+```
+
+Ralph checks these after the story completes. A missing file or un-importable symbol causes the story to fail even if all acceptance criteria passed. Think of this as a regression fence — it is always cheaper to declare it than to re-implement deleted code.
 
 ---
 

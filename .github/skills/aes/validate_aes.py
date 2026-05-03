@@ -2,7 +2,7 @@
 """Standalone AES validator — no external dependencies required.
 
 Usage:
-    python validate_aes.py                        # validates scripts/ralph/aes.json
+    python validate_aes.py                        # validates scripts/march/aes.json
     python validate_aes.py path/to/aes.json       # validates a specific file
 
 Exit codes:
@@ -17,7 +17,7 @@ import re
 import sys
 from pathlib import Path
 
-_DEFAULT_AES_PATH = Path("scripts/ralph/aes.json")
+_DEFAULT_AES_PATH = Path("scripts/march/aes.json")
 
 _ID_PATTERN = re.compile(r"^[A-Z]+-[0-9]+$")
 _VALID_COMPLEXITY = {"trivial", "standard", "complex"}

@@ -113,7 +113,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-004",
@@ -149,7 +149,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-005",
@@ -186,7 +186,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

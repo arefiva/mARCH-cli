@@ -3,15 +3,33 @@
 Provides a reactive, widget-based terminal interface using the Textual framework.
 """
 
-from typing import ClassVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, ClassVar
 
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.widgets import Footer, Header, Input
 
+from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType
 from mARCH.ui.tui_widgets import ConversationView, InputBar
 from mARCH.ui.tui_widgets.message import MessageRole
+
+if TYPE_CHECKING:
+    from mARCH.ui.tui_session import TuiSession
+
+
+def _help_text() -> str:
+    """Return plain-text help content for the /help command."""
+    return (
+        "Available commands:\n"
+        "  /help        Show this message\n"
+        "  /status      Show current status\n"
+        "  /model       Show current model\n"
+        "  exit, quit   Exit the application\n\n"
+        "Type a message to chat with the AI assistant."
+    )
 
 
 class MarchApp(App[None]):
@@ -41,15 +59,18 @@ class MarchApp(App[None]):
         Binding("ctrl+d", "quit", "Quit", show=False),
     ]
 
-    def __init__(self, ai_client=None, agent=None, **kwargs) -> None:
+    def __init__(self, session: TuiSession | None = None, ai_client=None, agent=None, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._ai_client = ai_client
-        self._agent = agent
+        self._session = session
+        # When session is provided, prefer its values; explicit kwargs override for tests
+        self._ai_client = ai_client if ai_client is not None else (session.ai_client if session else None)
+        self._agent = agent if agent is not None else (session.agent if session else None)
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
         yield ConversationView(id="conversation-area")
-        yield InputBar(id="input-bar")
+        mode_manager = self._session.mode_manager if self._session else None
+        yield InputBar(id="input-bar", mode_manager=mode_manager)
         yield Footer()
 
     def on_mount(self) -> None:
@@ -62,6 +83,15 @@ class MarchApp(App[None]):
         if not text:
             return
         event.input.clear()
+
+        if text.lower() in ("exit", "quit"):
+            self.exit()
+            return
+
+        if text.startswith("/"):
+            self._handle_slash_command(text)
+            return
+
         conv = self.query_one(ConversationView)
         conv.add_message(MessageRole.USER, text)
         if self._agent is not None:
@@ -73,6 +103,47 @@ class MarchApp(App[None]):
                 MessageRole.ASSISTANT,
                 "AI client not configured — set ANTHROPIC_API_KEY",
             )
+
+    def _handle_slash_command(self, text: str) -> None:
+        """Dispatch a slash command and display the result as a SYSTEM message."""
+        conv = self.query_one(ConversationView)
+        parser = (
+            self._session.slash_parser
+            if self._session and self._session.slash_parser is not None
+            else SlashCommandParser()
+        )
+        parsed = parser.parse(text)
+        if parsed is None:
+            conv.add_message(MessageRole.SYSTEM, f"Unknown command: {text}")
+            return
+
+        if parsed.command_type == SlashCommandType.HELP:
+            conv.add_message(MessageRole.SYSTEM, _help_text())
+        elif parsed.command_type == SlashCommandType.STATUS:
+            conv.add_message(MessageRole.SYSTEM, self._status_text())
+        elif parsed.command_type == SlashCommandType.MODEL:
+            conv.add_message(MessageRole.SYSTEM, self._model_text())
+        else:
+            conv.add_message(
+                MessageRole.SYSTEM,
+                f"/{parsed.command_type.value} is not available in TUI mode",
+            )
+
+    def _status_text(self) -> str:
+        """Return a plain-text status summary."""
+        lines = ["mARCH Status:"]
+        if self._session and self._session.config_manager:
+            cm = self._session.config_manager
+            lines.append(f"  Model: {cm.get_model()}")
+            lines.append(f"  Experimental: {'on' if cm.is_experimental_enabled() else 'off'}")
+        lines.append(f"  AI client: {'configured' if self._ai_client is not None else 'not configured'}")
+        return "\n".join(lines)
+
+    def _model_text(self) -> str:
+        """Return the current model name as a plain-text string."""
+        if self._session and self._session.config_manager:
+            return f"Current model: {self._session.config_manager.get_model()}"
+        return "Model: not configured"
 
     @work(thread=True, exclusive=True)
     def _stream_ai_response(self, user_text: str) -> None:

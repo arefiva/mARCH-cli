@@ -144,21 +144,20 @@ class TestInputBar:
         assert InputBar is not None
 
     def test_mode_cycle_order(self):
-        """Mode cycling follows INTERACTIVE -> PLAN -> AUTOPILOT -> SHELL -> INTERACTIVE."""
+        """Mode cycling follows INTERACTIVE -> PLAN -> AUTOPILOT -> INTERACTIVE."""
         from mARCH.ui.tui_widgets.input_bar import CYCLE_ORDER, InputMode
 
         assert CYCLE_ORDER[0] == InputMode.INTERACTIVE
         assert CYCLE_ORDER[1] == InputMode.PLAN
         assert CYCLE_ORDER[2] == InputMode.AUTOPILOT
-        assert CYCLE_ORDER[3] == InputMode.SHELL
-        assert len(CYCLE_ORDER) == 4
+        assert len(CYCLE_ORDER) == 3
 
     def test_mode_cycle_wraps(self):
-        """Mode cycling wraps back to INTERACTIVE after SHELL."""
+        """Mode cycling wraps back to INTERACTIVE after AUTOPILOT."""
         from mARCH.ui.tui_widgets.input_bar import CYCLE_ORDER, InputMode
 
-        # Simulate cycling from SHELL
-        current = InputMode.SHELL
+        # Simulate cycling from AUTOPILOT
+        current = InputMode.AUTOPILOT
         idx = CYCLE_ORDER.index(current)
         next_mode = CYCLE_ORDER[(idx + 1) % len(CYCLE_ORDER)]
         assert next_mode == InputMode.INTERACTIVE
@@ -497,4 +496,211 @@ async def test_submit_text_no_ai_client_shows_not_configured():
         assistant_msgs = [m for m in messages if m._role == MessageRole.ASSISTANT]
         assert len(assistant_msgs) >= 1
         assert "not configured" in assistant_msgs[0]._content
+
+
+# ============================================================================
+# US-003: Slash command dispatch and exit handling in TUI
+# ============================================================================
+
+
+@pytest.mark.asyncio
+async def test_exit_command_exits_app():
+    """Typing 'exit' exits the app without errors."""
+    from mARCH.ui.tui_app import MarchApp
+
+    async with MarchApp().run_test(headless=True) as pilot:
+        await pilot.press("e", "x", "i", "t", "enter")
+    # If we reach here, the app exited cleanly
+
+
+@pytest.mark.asyncio
+async def test_quit_command_exits_app():
+    """Typing 'quit' exits the app without errors."""
+    from mARCH.ui.tui_app import MarchApp
+
+    async with MarchApp().run_test(headless=True) as pilot:
+        await pilot.press("q", "u", "i", "t", "enter")
+
+
+@pytest.mark.asyncio
+async def test_help_slash_command_shows_system_message():
+    """/help produces a SYSTEM MessageWidget in ConversationView."""
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.conversation import ConversationView
+    from mARCH.ui.tui_widgets.message import MessageRole, MessageWidget
+
+    async with MarchApp().run_test(headless=True) as pilot:
+        await pilot.press("/", "h", "e", "l", "p", "enter")
+        await pilot.pause()
+        conv = pilot.app.query_one(ConversationView)
+        messages = list(conv.query(MessageWidget))
+        system_msgs = [m for m in messages if m._role == MessageRole.SYSTEM]
+        assert len(system_msgs) >= 1
+
+
+@pytest.mark.asyncio
+async def test_slash_command_does_not_add_user_message():
+    """Slash commands do NOT add a USER message to ConversationView."""
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.conversation import ConversationView
+    from mARCH.ui.tui_widgets.message import MessageRole, MessageWidget
+
+    async with MarchApp().run_test(headless=True) as pilot:
+        await pilot.press("/", "h", "e", "l", "p", "enter")
+        await pilot.pause()
+        conv = pilot.app.query_one(ConversationView)
+        messages = list(conv.query(MessageWidget))
+        user_msgs = [m for m in messages if m._role == MessageRole.USER]
+        assert len(user_msgs) == 0
+
+
+@pytest.mark.asyncio
+async def test_model_slash_command_shows_system_message():
+    """/model produces a SYSTEM MessageWidget in ConversationView."""
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.conversation import ConversationView
+    from mARCH.ui.tui_widgets.message import MessageRole, MessageWidget
+
+    async with MarchApp().run_test(headless=True) as pilot:
+        await pilot.press("/", "m", "o", "d", "e", "l", "enter")
+        await pilot.pause()
+        conv = pilot.app.query_one(ConversationView)
+        messages = list(conv.query(MessageWidget))
+        system_msgs = [m for m in messages if m._role == MessageRole.SYSTEM]
+        assert len(system_msgs) >= 1
+
+
+class TestTuiSession:
+    """Tests for TuiSession dataclass."""
+
+    def test_tui_session_importable(self):
+        """TuiSession can be imported."""
+        from mARCH.ui.tui_session import TuiSession
+
+        assert TuiSession is not None
+
+    def test_tui_session_default_construction(self):
+        """TuiSession can be constructed with no arguments (all fields default to None)."""
+        from mARCH.ui.tui_session import TuiSession
+
+        session = TuiSession()
+        assert session.ai_client is None
+        assert session.agent is None
+        assert session.slash_parser is None
+        assert session.mode_manager is None
+        assert session.config_manager is None
+        assert session.github_integration is None
+
+    def test_march_app_accepts_session(self):
+        """MarchApp accepts a session keyword argument."""
+        from unittest.mock import MagicMock
+
+        from mARCH.ui.tui_app import MarchApp
+        from mARCH.ui.tui_session import TuiSession
+
+        mock_client = MagicMock()
+        mock_agent = MagicMock()
+        session = TuiSession(ai_client=mock_client, agent=mock_agent)
+        app = MarchApp(session=session)
+        assert app._session is session
+        assert app._ai_client is mock_client
+        assert app._agent is mock_agent
+
+
+# ============================================================================
+# US-004: Mode cycling with real ModeManager
+# ============================================================================
+
+
+class TestInputBarModeManager:
+    """Tests for InputBar mode_manager integration."""
+
+    def test_input_bar_accepts_mode_manager(self):
+        """InputBar.__init__ accepts an optional mode_manager keyword argument."""
+        from unittest.mock import MagicMock
+
+        from mARCH.ui.tui_widgets.input_bar import InputBar
+
+        mock_mm = MagicMock()
+        bar = InputBar(mode_manager=mock_mm)
+        assert bar._mode_manager is mock_mm
+
+    def test_input_bar_none_mode_manager_default(self):
+        """InputBar._mode_manager defaults to None when not provided."""
+        from mARCH.ui.tui_widgets.input_bar import InputBar
+
+        bar = InputBar()
+        assert bar._mode_manager is None
+
+    def test_cycle_mode_calls_mode_manager_cycle(self):
+        """action_cycle_mode() calls mode_manager.cycle_mode() when provided."""
+        from unittest.mock import MagicMock
+
+        from mARCH.core.execution_mode import ExecutionMode
+        from mARCH.ui.tui_widgets.input_bar import InputBar
+
+        mock_mm = MagicMock()
+        mock_mm.cycle_mode.return_value = ExecutionMode.PLAN
+        bar = InputBar(mode_manager=mock_mm)
+        bar._mode_label = MagicMock()
+
+        bar.action_cycle_mode()
+
+        mock_mm.cycle_mode.assert_called_once()
+
+    def test_cycle_mode_updates_label_with_mode_manager(self):
+        """action_cycle_mode() updates the mode label when mode_manager is set."""
+        from unittest.mock import MagicMock
+
+        from mARCH.core.execution_mode import ExecutionMode
+        from mARCH.ui.tui_widgets.input_bar import InputBar
+
+        mock_mm = MagicMock()
+        mock_mm.cycle_mode.return_value = ExecutionMode.PLAN
+        bar = InputBar(mode_manager=mock_mm)
+        bar._mode_label = MagicMock()
+
+        bar.action_cycle_mode()
+
+        bar._mode_label.update.assert_called_once()
+
+    def test_cycle_mode_local_fallback_without_mode_manager(self):
+        """action_cycle_mode() uses local CYCLE_ORDER when mode_manager is None."""
+        from unittest.mock import MagicMock
+
+        from mARCH.ui.tui_widgets.input_bar import CYCLE_ORDER, InputBar, InputMode
+
+        bar = InputBar()
+        bar._mode_label = MagicMock()
+        assert bar._mode == InputMode.INTERACTIVE
+
+        bar.action_cycle_mode()
+
+        assert bar._mode == CYCLE_ORDER[1]
+
+
+# ============================================================================
+# US-005: StatusBar markup fix
+# ============================================================================
+
+
+class TestStatusBarMarkup:
+    """Tests for StatusBar markup=True fix."""
+
+    def test_status_bar_init_passes_markup(self):
+        """StatusBar.__init__ passes markup=True to super().__init__."""
+        from mARCH.ui.tui_widgets.status_bar import StatusBar
+
+        bar = StatusBar()
+        # Widget stores the markup argument as _render_markup
+        assert bar._render_markup is True
+
+    def test_set_status_does_not_pass_markup_kwarg(self):
+        """set_status() does not pass markup=True to self.update()."""
+        import inspect
+
+        from mARCH.ui.tui_widgets.status_bar import StatusBar
+
+        src = inspect.getsource(StatusBar.set_status)
+        assert "markup=True" not in src
 

@@ -22,7 +22,6 @@ CYCLE_ORDER: list[InputMode] = [
     InputMode.INTERACTIVE,
     InputMode.PLAN,
     InputMode.AUTOPILOT,
-    InputMode.SHELL,
 ]
 
 MODE_COLORS: dict[InputMode, str] = {
@@ -60,8 +59,9 @@ class InputBar(Widget):
         Binding("ctrl+n", "toggle_multiline", "Multiline", show=False),
     ]
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, mode_manager=None, **kwargs) -> None:
         super().__init__(**kwargs)
+        self._mode_manager = mode_manager
         self._mode = InputMode.INTERACTIVE
         self._mode_label: Label | None = None
         self._input: Input | None = None
@@ -79,8 +79,15 @@ class InputBar(Widget):
 
     def action_cycle_mode(self) -> None:
         """Cycle to the next input mode."""
-        idx = CYCLE_ORDER.index(self._mode)
-        self._mode = CYCLE_ORDER[(idx + 1) % len(CYCLE_ORDER)]
+        if self._mode_manager is not None:
+            new_exec_mode = self._mode_manager.cycle_mode()
+            try:
+                self._mode = InputMode(new_exec_mode.value.upper())
+            except ValueError:
+                self._mode = InputMode.INTERACTIVE
+        else:
+            idx = CYCLE_ORDER.index(self._mode)
+            self._mode = CYCLE_ORDER[(idx + 1) % len(CYCLE_ORDER)]
         if self._mode_label is not None:
             color = MODE_COLORS[self._mode]
             self._mode_label.update(f"[{color}]{self._mode.value}[/]")

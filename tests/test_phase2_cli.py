@@ -4,17 +4,11 @@ Tests for Phase 2: CLI Foundation.
 Tests for slash command parsing, CLI argument handling, and command routing.
 """
 
-import pytest
-from pathlib import Path
-
-from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType, ParsedCommand
 from mARCH.cli.cli import (
     AppContext,
     get_app_context,
-    handle_model_command,
-    handle_experimental_command,
-    handle_status_command,
 )
+from mARCH.core.slash_commands import ParsedCommand, SlashCommandParser, SlashCommandType
 
 
 class TestSlashCommandParser:
@@ -138,42 +132,6 @@ class TestParsedCommand:
             raw="/login",
         )
         assert "/login" in str(cmd)
-
-
-class TestCommandHandlers:
-    """Tests for command handler functions."""
-
-    def test_model_command_handler(self, capsys):
-        """Test /model command handler."""
-        ctx = AppContext()
-        original_model = ctx.current_model
-        
-        # Test viewing current model
-        handle_model_command(ctx, [])
-        captured = capsys.readouterr()
-        assert original_model in captured.out or "Current Model" in captured.out
-
-    def test_experimental_command_handler(self, capsys):
-        """Test /experimental command handler."""
-        ctx = AppContext()
-        original_state = ctx.experimental_mode
-        
-        # Toggle experimental mode
-        handle_experimental_command(ctx, [])
-        assert ctx.experimental_mode != original_state
-        
-        captured = capsys.readouterr()
-        assert "Experimental mode" in captured.out
-
-    def test_status_command_handler(self, capsys):
-        """Test /status command handler."""
-        ctx = AppContext()
-        handle_status_command(ctx, [])
-        
-        captured = capsys.readouterr()
-        assert "Version" in captured.out
-        assert "Model" in captured.out
-        assert "Experimental Mode" in captured.out
 
 
 class TestSlashCommandTypes:

@@ -1,0 +1,102 @@
+{
+  "project": "copilot-cli-python",
+  "branchName": "feature/test-suite-cleanup",
+  "description": "Optimize test suite from 813 to ~220 core tests to eliminate memory spikes and improve dev experience",
+  "_source": "tasks/prd-test-cleanup/prd.md",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Delete Low-Value Test Files",
+      "description": "As a developer, I want to remove redundant test files so that running the test suite doesn't cause memory spikes to 100%.",
+      "priority": 1,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [],
+      "notes": "These files test infrastructure, duplicates, and non-critical features. Deleting them removes ~400 tests with minimal risk to user-facing functionality.",
+      "implementationNotes": [
+        "Delete redundant phase test files: test_phase1_phase2.py (47 tests), test_phase1_task3.py (46 tests), test_tui_enhancements.py (27 tests), test_analysis_multifile.py (14 tests)",
+        "Delete 5 of 6 networking files: test_networking_rpc.py (32), test_networking_transport.py (28), test_networking_payload.py (22), test_networking_resilience.py (26). Keep test_networking_connection.py",
+        "Delete 10 of 11 extension files: test_extension_sandbox.py (25), registry (20), manifest (19), protocol (19), discovery (17), contracts (13), integration (12), cli_command (11), tool (8), manager (6). Keep test_extension_lifecycle.py",
+        "Total files to delete: 20 files, ~400 tests removed",
+        "After deletion: Run 'python -m pytest --collect-only' to verify remaining tests count (~220)",
+        "Verify collection time dropped to <0.5s"
+      ],
+      "acceptanceCriteria": [
+        "All 20 identified low-value test files successfully deleted",
+        "Remaining test count approximately 220-250 tests",
+        "pytest --collect-only completes in <0.5s",
+        "No import errors or broken test references",
+        "Git status shows 20 deleted files",
+        "Build with `ruff check` passes",
+        "No new linting errors introduced"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Consolidate and Reduce Core Test Files",
+      "description": "As a developer, I want to reduce redundant test cases in core files so that test suite runs faster and uses less memory.",
+      "priority": 2,
+      "complexity": "standard",
+      "riskLevel": "medium",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["US-001"],
+      "notes": "Reduce test counts in high-volume files by keeping core flows and removing edge case variations. Maintain coverage of critical paths.",
+      "implementationNotes": [
+        "In test_phase5_tui.py: Reduce from 66 to 20 tests (keep main UI rendering, input handling; remove style/color variations)",
+        "In test_phase6_agent.py: Reduce from 54 to 25 tests (keep decision logic, tool calling; remove minor parameter variations)",
+        "In test_phase7_config.py: Reduce from 44 to 10 tests (keep config file loading, env override; remove edge cases)",
+        "In test_phase8_platform.py: Reduce from 47 to 15 tests (keep platform detection, path handling; remove OS-specific edge cases)",
+        "In test_phase9_validation.py: Reduce from 31 to 10 tests (keep core validators; remove format string tests)",
+        "Strategy: For each file, identify core test class/function and keep only main path + 1-2 critical edge cases",
+        "Remove tests by commenting them out or deleting entire test classes/functions",
+        "Run 'pytest tests/test_phaseX.py' for each file to verify remaining tests pass"
+      ],
+      "acceptanceCriteria": [
+        "test_phase5_tui.py reduced from 66 to ~20 tests",
+        "test_phase6_agent.py reduced from 54 to ~25 tests",
+        "test_phase7_config.py reduced from 44 to ~10 tests",
+        "test_phase8_platform.py reduced from 47 to ~15 tests",
+        "test_phase9_validation.py reduced from 31 to ~10 tests",
+        "Total tests removed: ~185 tests",
+        "All remaining tests in these files pass",
+        "Core functionality tests kept: config loading, agent decision logic, TUI main flows",
+        "pytest collection time for these files <200ms",
+        "ruff check passes on modified files"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Verify Cleanup and Validate Coverage",
+      "description": "As a developer, I want to verify the test cleanup maintained critical coverage and didn't break functionality.",
+      "priority": 3,
+      "complexity": "standard",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": ["US-001", "US-002"],
+      "notes": "Final validation that the cleanup was successful and didn't remove critical tests.",
+      "implementationNotes": [
+        "Run 'pytest --collect-only' and verify total test count is 200-300 (from original 813)",
+        "Run full test suite: 'pytest tests/' and verify all remaining tests pass",
+        "Check collection time: should be <0.5s (from 1.07s)",
+        "Run specific critical tests: march-cli help, mode switching, [[PLAN]] prefix detection",
+        "Verify no import errors or broken references in test files",
+        "Check that test_phase1_foundation.py, test_phase2_cli.py, test_phase3_github.py all still pass",
+        "Verify CLI entry point tests and core user-facing tests remain"
+      ],
+      "acceptanceCriteria": [
+        "pytest collects 220-300 total tests (minimum 60% reduction from 813)",
+        "pytest collection time <0.5s",
+        "All remaining tests pass without failures",
+        "Critical tests present: mode switching, plan mode, CLI commands, GitHub integration",
+        "No import errors or broken test modules",
+        "Memory usage during test run <20% (from 100%)",
+        "Build with `ruff check` passes",
+        "pytest execution time <30s for full suite"
+      ],
+      "passes": true
+    }
+  ]
+}

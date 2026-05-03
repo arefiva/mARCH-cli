@@ -1,0 +1,55 @@
+{"timestamp": "2026-05-03T05:17:00.493410+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T05:17:00.508234+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T05:17:00.508732+00:00", "event": "quality_gate_start", "trace_id": "c04fdf9c55f2", "span_id": "af442ebc53e0", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T05:17:00.509054+00:00", "event": "mcp_check", "trace_id": "c04fdf9c55f2", "span_id": "af442ebc53e0", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T05:17:00.509201+00:00", "event": "quality_gate_end", "trace_id": "c04fdf9c55f2", "span_id": "af442ebc53e0", "parent_span_id": null, "status": "ok", "duration_ms": 0.5, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T05:17:00.539086+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T05:30:28.730541+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T05:30:28.734219+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T05:30:28.734531+00:00", "event": "quality_gate_start", "trace_id": "375c55aa3366", "span_id": "285f2df673b0", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T05:30:28.734783+00:00", "event": "mcp_check", "trace_id": "375c55aa3366", "span_id": "285f2df673b0", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T05:30:28.734898+00:00", "event": "quality_gate_end", "trace_id": "375c55aa3366", "span_id": "285f2df673b0", "parent_span_id": null, "status": "ok", "duration_ms": 0.3, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T05:30:28.868841+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T05:37:16.482058+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T05:37:16.486676+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T05:37:16.486980+00:00", "event": "quality_gate_start", "trace_id": "e3f4c4bf5ab6", "span_id": "1d7f6964106b", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T05:37:16.487141+00:00", "event": "mcp_check", "trace_id": "e3f4c4bf5ab6", "span_id": "1d7f6964106b", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T05:37:16.487239+00:00", "event": "quality_gate_end", "trace_id": "e3f4c4bf5ab6", "span_id": "1d7f6964106b", "parent_span_id": null, "status": "ok", "duration_ms": 0.2, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T05:37:16.495490+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T05:43:07.526497+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T05:43:07.530881+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T05:43:07.531310+00:00", "event": "quality_gate_start", "trace_id": "c979121ba2ef", "span_id": "e9c22693da40", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T05:43:07.531561+00:00", "event": "mcp_check", "trace_id": "c979121ba2ef", "span_id": "e9c22693da40", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T05:43:07.531667+00:00", "event": "quality_gate_end", "trace_id": "c979121ba2ef", "span_id": "e9c22693da40", "parent_span_id": null, "status": "ok", "duration_ms": 0.3, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T05:43:07.541135+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T05:48:49.460712+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T05:48:49.464306+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T05:48:49.464622+00:00", "event": "quality_gate_start", "trace_id": "5911be4ff867", "span_id": "36f58e055d40", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T05:48:49.464844+00:00", "event": "mcp_check", "trace_id": "5911be4ff867", "span_id": "36f58e055d40", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T05:48:49.464998+00:00", "event": "quality_gate_end", "trace_id": "5911be4ff867", "span_id": "36f58e055d40", "parent_span_id": null, "status": "ok", "duration_ms": 0.3, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T05:48:49.473937+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T05:49:31.389001+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T05:49:31.404353+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/test-suite-cleanup", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T05:49:31.404790+00:00", "event": "quality_gate_start", "trace_id": "e78e21c33466", "span_id": "24cb2994ec9b", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T05:49:31.405140+00:00", "event": "mcp_check", "trace_id": "e78e21c33466", "span_id": "24cb2994ec9b", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T05:49:31.405287+00:00", "event": "quality_gate_end", "trace_id": "e78e21c33466", "span_id": "24cb2994ec9b", "parent_span_id": null, "status": "ok", "duration_ms": 0.5, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T05:49:31.414777+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Delete Low-Value Test Files", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T06:10:12.037864+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 1089.6, "estimated_output_tokens": 5362, "premium_requests": 1}
+{"timestamp": "2026-05-03T06:14:40.281372+00:00", "event": "token_usage", "model": "claude-opus-4.6", "duration_seconds": 268.2, "estimated_output_tokens": 3927, "premium_requests": 1}
+{"timestamp": "2026-05-03T06:18:38.554136+00:00", "event": "token_usage", "model": "claude-opus-4.6", "duration_seconds": 238.3, "estimated_output_tokens": 1186, "premium_requests": 1}
+{"timestamp": "2026-05-03T06:18:38.554478+00:00", "event": "review_fixes_planned", "branch": "feature/test-suite-cleanup"}
+{"timestamp": "2026-05-03T06:18:38.560499+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Missing WAITING_INPUT Assertion", "model": "claude-sonnet-4.6", "complexity": "trivial"}
+{"timestamp": "2026-05-03T06:26:38.504142+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 479.9, "estimated_output_tokens": 2583, "premium_requests": 1}
+{"timestamp": "2026-05-03T06:26:38.505941+00:00", "event": "run_completed", "result": "all_stories_passed"}
+{"timestamp": "2026-05-03T06:31:19.373771+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T06:33:05.153132+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T06:33:05.172721+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T06:33:05.173124+00:00", "event": "quality_gate_start", "trace_id": "52aa1bc327ce", "span_id": "ed22f9e802bd", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T06:33:05.173364+00:00", "event": "mcp_check", "trace_id": "52aa1bc327ce", "span_id": "ed22f9e802bd", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T06:33:05.173451+00:00", "event": "quality_gate_end", "trace_id": "52aa1bc327ce", "span_id": "ed22f9e802bd", "parent_span_id": null, "status": "ok", "duration_ms": 0.3, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T06:35:10.750295+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T06:35:10.753435+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T06:35:10.753628+00:00", "event": "quality_gate_start", "trace_id": "cc248acec0bb", "span_id": "d50defa18d1c", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T06:35:10.753777+00:00", "event": "mcp_check", "trace_id": "cc248acec0bb", "span_id": "d50defa18d1c", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T06:35:10.753918+00:00", "event": "quality_gate_end", "trace_id": "cc248acec0bb", "span_id": "d50defa18d1c", "parent_span_id": null, "status": "ok", "duration_ms": 0.3, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T06:35:10.764105+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}

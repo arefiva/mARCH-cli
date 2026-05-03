@@ -1,0 +1,23 @@
+# Patterns for agents to ignore when exploring or indexing this codebase
+
+# Meta-project content: prompt files, workflow definitions, skill definitions
+tasks/
+scripts/march/
+.github/skills/
+src/mARCH/extension/builtin/
+
+# Large generated/build artifacts
+**/*.egg-info/
+**/__pycache__/
+**/.*_cache/
+venv/
+.venv/
+build/
+dist/
+
+# IDE and OS files (not relevant to agent work)
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store

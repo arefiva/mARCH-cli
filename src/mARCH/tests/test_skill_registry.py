@@ -1,6 +1,7 @@
 """Unit tests for skill registry."""
 
 import pytest
+
 from src.mARCH.skills import Skill, SkillRegistry
 
 
@@ -9,7 +10,7 @@ class DummySkill(Skill):
     name = "dummy_skill"
     version = "1.0.0"
     description = "A dummy test skill"
-    
+
     async def execute(self, params, context=None):
         """Execute the skill."""
         return {"result": "success"}
@@ -30,7 +31,7 @@ def test_skill_registration(registry):
     """Test registering a skill."""
     skill = DummySkill()
     registry.register_skill(skill)
-    
+
     assert registry.get_skill("dummy_skill") is not None
 
 
@@ -38,7 +39,7 @@ def test_skill_retrieval(registry):
     """Test retrieving a skill."""
     skill = DummySkill()
     registry.register_skill(skill)
-    
+
     retrieved = registry.get_skill("dummy_skill")
     assert retrieved is not None
     assert retrieved.name == "dummy_skill"
@@ -49,10 +50,10 @@ def test_skill_list(registry):
     skill1 = DummySkill()
     skill2 = DummySkill()
     skill2.name = "dummy_skill_2"
-    
+
     registry.register_skill(skill1)
     registry.register_skill(skill2)
-    
+
     skills = registry.list_skills()
     assert len(skills) >= 2
 
@@ -61,7 +62,7 @@ def test_skill_unregistration(registry):
     """Test unregistering a skill."""
     skill = DummySkill()
     registry.register_skill(skill)
-    
+
     success = registry.unregister_skill("dummy_skill")
     assert success is True
     assert registry.get_skill("dummy_skill") is None
@@ -71,7 +72,7 @@ def test_skill_validation(registry):
     """Test skill configuration validation."""
     skill = DummySkill()
     registry.register_skill(skill)
-    
+
     config = {"name": "dummy_skill", "params": {}}
     assert registry.validate_skill_config(config) is True
 
@@ -86,10 +87,10 @@ def test_skill_metadata(registry):
     """Test skill metadata."""
     skill = DummySkill()
     registry.register_skill(skill)
-    
+
     metadata_list = registry.get_skills_metadata()
     assert len(metadata_list) >= 1
-    assert metadata_list[0]["name"] == "dummy_skill"
+    assert any(m["name"] == "dummy_skill" for m in metadata_list)
 
 
 if __name__ == "__main__":

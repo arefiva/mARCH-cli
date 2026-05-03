@@ -13,30 +13,6 @@
       "riskLevel": "medium",
       "preferredModel": "claude-sonnet-4.6",
       "dependsOn": [],
-      "implementationNotes": [
-        "Create new module `src/mARCH/core/prompts.py` with a `PromptBuilder` class.",
-        "Add an `AgentRole` enum (TASK_AGENT, CODING_AGENT) to `prompts.py` to support role-variant identity prompts.",
-        "Implement `PromptBuilder.build_system_prompt(name, role, context, **kwargs) -> str` as the main entry point.",
-        "Implement private methods for each section: `_identity_section(name, role)`, `_task_guidelines_section()`, `_code_change_section()`, `_linting_testing_section()`, `_style_section()`, `_ecosystem_tools_section()`, `_tips_section()`, `_prohibited_actions_section()`.",
-        "Each section method returns a string. The builder concatenates them with double-newline separators.",
-        "Define all prompt text as module-level string constants (e.g., `_TASK_GUIDELINES`, `_CODE_CHANGE_INSTRUCTIONS`) for easy testing and modification.",
-        "The identity section uses f-string interpolation: for TASK_AGENT role, agentName='Task Agent' with research/analysis skills; for CODING_AGENT role, agentName='Coding Agent' with coding skills. See JS lines 1327-1331.",
-        "Update `Agent._get_system_prompt()` in `src/mARCH/core/agent_state.py` to delegate to `PromptBuilder.build_system_prompt()` instead of constructing its own string. Pass `self.name`, current directory, language, branch, and available files from the existing logic.",
-        "Add `role: AgentRole` field to `Agent.__init__()` with default `AgentRole.TASK_AGENT`.",
-        "Create test file `src/mARCH/tests/test_prompts.py` with tests: (1) builder returns non-empty string, (2) identity section includes agent name and role-specific skills, (3) each section constant is non-empty, (4) TASK_AGENT vs CODING_AGENT produce different identity text, (5) build_system_prompt includes all sections.",
-        "Files touched: `src/mARCH/core/prompts.py` (new), `src/mARCH/core/agent_state.py` (edit _get_system_prompt and __init__), `src/mARCH/core/__init__.py` (export PromptBuilder, AgentRole), `src/mARCH/tests/test_prompts.py` (new)."
-      ],
-      "acceptanceCriteria": [
-        "A new file `src/mARCH/core/prompts.py` exists with `PromptBuilder` class and `AgentRole` enum.",
-        "`Agent._get_system_prompt()` delegates to `PromptBuilder.build_system_prompt()` and returns a string containing all 8 static sections.",
-        "The returned prompt includes role-variant identity text (different for TASK_AGENT vs CODING_AGENT).",
-        "The returned prompt includes task guidelines mentioning `<plan>` tags.",
-        "The returned prompt includes prohibited actions section with security rules.",
-        "All existing tests that call `Agent` or `get_conversation_context` continue to pass without modification.",
-        "New test file `src/mARCH/tests/test_prompts.py` has at least 5 passing tests.",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
       "passes": true
     },
     {
@@ -47,28 +23,7 @@
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [
-        "PS-001"
-      ],
-      "implementationNotes": [
-        "Create `src/mARCH/core/custom_instructions.py` with a `CustomInstructionsLoader` class.",
-        "`CustomInstructionsLoader.load(repo_root: str | Path) -> str | None` reads `.github/copilot-instructions.md` from the repo root. Returns content string or None if file doesn't exist.",
-        "Add `_environment_context_section(context: AgentContext) -> str` to `PromptBuilder` in `prompts.py`. Include: current working directory, git repo root, git branch, OS (via `platform.system()`), and a note 'You do not need to make additional tool calls to verify this.'",
-        "Add `_custom_instructions_section(repo_root: str | None) -> str | None` to `PromptBuilder`. Uses `CustomInstructionsLoader.load()`. Returns None if no file found. When present, wraps content in a clear header section.",
-        "Update `PromptBuilder.build_system_prompt()` to accept optional `repo_root` kwarg and call both new sections.",
-        "Update `Agent._get_system_prompt()` to pass `repo_root` (derived from `self.context.current_directory` or git root detection).",
-        "Add tests to `src/mARCH/tests/test_prompts.py`: (1) environment section includes OS name and directory, (2) custom instructions returns None when file missing, (3) custom instructions returns content when file exists (use tmp_path fixture), (4) full prompt includes environment section.",
-        "Files touched: `src/mARCH/core/custom_instructions.py` (new), `src/mARCH/core/prompts.py` (edit), `src/mARCH/core/agent_state.py` (edit), `src/mARCH/tests/test_prompts.py` (edit)."
-      ],
-      "acceptanceCriteria": [
-        "A new file `src/mARCH/core/custom_instructions.py` exists with `CustomInstructionsLoader` class.",
-        "`PromptBuilder.build_system_prompt()` output includes an environment context section with OS and directory info.",
-        "When `.github/copilot-instructions.md` exists in the repo root, its content is included in the system prompt.",
-        "When the file does not exist, no custom instructions section appears (no error raised).",
-        "At least 3 new tests added for environment context and custom instructions.",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
+      "dependsOn": ["PS-001"],
       "passes": true
     },
     {
@@ -79,27 +34,7 @@
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [
-        "PS-001"
-      ],
-      "implementationNotes": [
-        "Add `_memory_section(memories: list[dict] | None) -> str | None` to `PromptBuilder` in `prompts.py`.",
-        "Each memory dict has keys: `fact` (str), `subject` (str), `citations` (str). Format each as a bullet point with citation.",
-        "When `memories` is non-empty, return the JS CLI's memory preamble: explain that memories may be obsolete/incorrect, instruct to verify via citations, and instruct to re-store useful facts to retain them longer.",
-        "When `memories` is None or empty, return None (section omitted).",
-        "Update `PromptBuilder.build_system_prompt()` to accept optional `memories` kwarg.",
-        "Update `Agent._get_system_prompt()` to accept and forward a `memories` parameter (default None).",
-        "Add tests: (1) memory section returns None when memories is empty/None, (2) memory section includes preamble text when memories provided, (3) memory section includes each fact and citation, (4) full prompt omits memory section when no memories.",
-        "Files touched: `src/mARCH/core/prompts.py` (edit), `src/mARCH/core/agent_state.py` (edit), `src/mARCH/tests/test_prompts.py` (edit)."
-      ],
-      "acceptanceCriteria": [
-        "When memories list is provided, the system prompt includes a memory context section with the preamble about verifying and refreshing memories.",
-        "Each memory's fact and citation appear in the prompt.",
-        "When no memories are provided, the memory section is entirely absent from the prompt.",
-        "At least 3 new tests cover memory injection logic.",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
+      "dependsOn": ["PS-001"],
       "passes": true
     },
     {
@@ -110,29 +45,7 @@
       "complexity": "complex",
       "riskLevel": "medium",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [
-        "PS-001"
-      ],
-      "implementationNotes": [
-        "Create `src/mARCH/core/context_compaction.py` with a `ContextCompactor` class.",
-        "Implement `should_compact(messages: list[dict], max_tokens: int = 100000) -> bool` — estimate token count (rough: 1 token ≈ 4 chars) and return True if over threshold (e.g., 75% of max_tokens).",
-        "Implement `build_summarization_prompt() -> str` — returns the JS CLI's structured summarization instruction asking the AI to produce a `<summary>` with: Task Overview, Current State, Important Discoveries, Next Steps, Context to Preserve.",
-        "Implement `build_compacted_messages(summary: str, original_user_messages: list[str]) -> list[dict]` — returns a new message list starting with a system-injected message in the format: 'The conversation history has been summarized...' followed by user messages and the summary in `<summary>` tags.",
-        "Implement async `compact(messages: list[dict], ai_complete_fn) -> list[dict]` — calls the AI with the summarization prompt appended to current messages, extracts `<summary>` from response, then calls `build_compacted_messages()`.",
-        "Integrate with `ConversationHistory` in `agent_state.py`: add a `compact_if_needed(ai_complete_fn, max_tokens)` method that checks and performs compaction.",
-        "Add test file `src/mARCH/tests/test_context_compaction.py` with tests: (1) should_compact returns False for short conversations, (2) should_compact returns True when over threshold, (3) build_summarization_prompt includes all 5 required sections, (4) build_compacted_messages produces correct format with summary tags, (5) compact extracts summary from mock AI response.",
-        "Files touched: `src/mARCH/core/context_compaction.py` (new), `src/mARCH/core/agent_state.py` (edit ConversationHistory), `src/mARCH/tests/test_context_compaction.py` (new)."
-      ],
-      "acceptanceCriteria": [
-        "A new file `src/mARCH/core/context_compaction.py` exists with `ContextCompactor` class.",
-        "`should_compact()` correctly detects when conversation exceeds token threshold.",
-        "`build_summarization_prompt()` returns a prompt that asks for Task Overview, Current State, Important Discoveries, Next Steps, and Context to Preserve sections.",
-        "`build_compacted_messages()` produces messages with the compacted history format including `<summary>` tags.",
-        "`ConversationHistory` has a `compact_if_needed` method.",
-        "At least 5 tests in `src/mARCH/tests/test_context_compaction.py`.",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
+      "dependsOn": ["PS-001"],
       "passes": true
     },
     {
@@ -143,27 +56,7 @@
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": [
-        "PS-001"
-      ],
-      "implementationNotes": [
-        "Add mode transition message templates to `prompts.py` as module-level constants: `AUTOPILOT_MODE_MESSAGE`, `AUTOPILOT_FLEET_MODE_MESSAGE`, `INTERACTIVE_MODE_MESSAGE`, `INTERACTIVE_NO_EXEC_MESSAGE`.",
-        "Add `get_mode_transition_message(mode: ExecutionMode) -> str` function to `prompts.py` that returns the appropriate message for each mode.",
-        "Add `QUOTA_INSUFFICIENT_MESSAGE` and `TASK_NOT_COMPLETE_MESSAGE` constants to `prompts.py`.",
-        "Add `get_quota_message() -> str` and `get_task_not_complete_message() -> str` utility functions.",
-        "Update `ModeManager` in `execution_mode.py` to expose a `get_transition_context(new_mode: ExecutionMode) -> str` method that returns `get_mode_transition_message(new_mode)`.",
-        "Add tests: (1) each mode returns a distinct non-empty message, (2) AUTOPILOT message mentions auto-approved, (3) INTERACTIVE message mentions manual approval, (4) quota message mentions insufficient, (5) task_not_complete message mentions not yet marked complete.",
-        "Files touched: `src/mARCH/core/prompts.py` (edit), `src/mARCH/core/execution_mode.py` (edit), `src/mARCH/tests/test_prompts.py` (edit)."
-      ],
-      "acceptanceCriteria": [
-        "Mode transition constants exist in `prompts.py` for all 4 mode variants.",
-        "`get_mode_transition_message()` returns the correct message for AUTOPILOT, AUTOPILOT_FLEET, INTERACTIVE, and PLAN modes.",
-        "Quota and task-not-complete message templates are available as public constants/functions.",
-        "`ModeManager.get_transition_context()` returns the mode transition message.",
-        "At least 4 new tests cover mode messages and utility messages.",
-        "ruff check passes with no errors",
-        "pytest passes with no failures"
-      ],
+      "dependsOn": ["PS-001"],
       "passes": true
     }
   ]

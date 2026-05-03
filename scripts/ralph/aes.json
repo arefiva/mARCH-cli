@@ -13,7 +13,7 @@
       "riskLevel": "medium",
       "preferredModel": "claude-sonnet-4.6",
       "dependsOn": [],
-      "notes": "This is the foundation story. Keep old TUI code intact — wire new app as the default entry point but don't delete existing files.",
+      "notes": "This is the foundation story. Keep old TUI code intact \u2014 wire new app as the default entry point but don't delete existing files.",
       "implementationNotes": [
         "Create src/mARCH/ui/tui_app.py with MarchApp(App) class using Textual CSS for vertical layout: Header | ConversationArea | InputBar | Footer",
         "Create src/mARCH/ui/tui_widgets/__init__.py as the widget package with re-exports",
@@ -29,7 +29,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "TUI-002",
@@ -39,8 +39,10 @@
       "complexity": "trivial",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["TUI-001"],
-      "notes": "Use importlib.metadata to get version. ASCII mascot is optional decoration — hide it on narrow terminals.",
+      "dependsOn": [
+        "TUI-001"
+      ],
+      "notes": "Use importlib.metadata to get version. ASCII mascot is optional decoration \u2014 hide it on narrow terminals.",
       "implementationNotes": [
         "Create src/mARCH/ui/tui_widgets/header.py with HeaderWidget(Static) class",
         "Display project name 'mARCH', version from importlib.metadata, and current mode string",
@@ -55,7 +57,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "TUI-003",
@@ -65,12 +67,14 @@
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["TUI-001"],
+      "dependsOn": [
+        "TUI-001"
+      ],
       "notes": "Use Textual's built-in Markdown widget for rich content rendering. Role colors should come from the theme system once TUI-009 lands, but hardcode for now.",
       "implementationNotes": [
         "Create src/mARCH/ui/tui_widgets/conversation.py with ConversationView(VerticalScroll) as the scrollable message container",
         "Create src/mARCH/ui/tui_widgets/message.py with MessageWidget(Static) for individual messages with role label and content",
-        "Support roles USER, ASSISTANT, SYSTEM, TOOL — each with a distinct label and color",
+        "Support roles USER, ASSISTANT, SYSTEM, TOOL \u2014 each with a distinct label and color",
         "Use Textual Markdown widget or Rich markup for markdown rendering including fenced code blocks with syntax highlighting",
         "Auto-scroll to bottom on new message mount; show placeholder text when conversation is empty"
       ],
@@ -83,7 +87,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "TUI-004",
@@ -93,25 +97,27 @@
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["TUI-001"],
-      "notes": "Match existing repl.py Shift+Tab cycling behavior. Don't delete repl.py — mark it deprecated.",
+      "dependsOn": [
+        "TUI-001"
+      ],
+      "notes": "Match existing repl.py Shift+Tab cycling behavior. Don't delete repl.py \u2014 mark it deprecated.",
       "implementationNotes": [
         "Create src/mARCH/ui/tui_widgets/input_bar.py with InputBar(Widget) containing a Textual Input child widget and a mode label",
         "Mode indicator shows current mode with color: INTERACTIVE(cyan), PLAN(yellow), AUTOPILOT(green), SHELL(red)",
-        "Bind Shift+Tab (backtab) to cycle modes in order: INTERACTIVE → PLAN → AUTOPILOT → SHELL → INTERACTIVE",
+        "Bind Shift+Tab (backtab) to cycle modes in order: INTERACTIVE \u2192 PLAN \u2192 AUTOPILOT \u2192 SHELL \u2192 INTERACTIVE",
         "Enter submits input text and clears field; Ctrl+C interrupts; Ctrl+N toggles multiline",
         "Wire into tui_app.py replacing the input placeholder; add deprecation comment to src/mARCH/cli/repl.py"
       ],
       "acceptanceCriteria": [
         "InputBar widget renders with mode label and text input field",
-        "Shift+Tab cycles modes in order: INTERACTIVE → PLAN → AUTOPILOT → SHELL → INTERACTIVE",
+        "Shift+Tab cycles modes in order: INTERACTIVE \u2192 PLAN \u2192 AUTOPILOT \u2192 SHELL \u2192 INTERACTIVE",
         "Enter key submits the input text and clears the field",
         "Mode indicator color changes per mode (cyan/yellow/green/red)",
         "Unit test verifies mode cycling logic returns correct next mode",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "TUI-005",
@@ -121,8 +127,10 @@
       "complexity": "complex",
       "riskLevel": "medium",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["TUI-003"],
-      "notes": "This is the most technically challenging story — async streaming into a reactive widget must be flicker-free. Use Textual Worker pattern.",
+      "dependsOn": [
+        "TUI-003"
+      ],
+      "notes": "This is the most technically challenging story \u2014 async streaming into a reactive widget must be flicker-free. Use Textual Worker pattern.",
       "implementationNotes": [
         "Add append_chunk(text: str) method to MessageWidget in src/mARCH/ui/tui_widgets/message.py that reactively updates content using Textual reactive or call_from_thread",
         "Update ConversationView in src/mARCH/ui/tui_widgets/conversation.py to create a placeholder ASSISTANT MessageWidget when streaming starts",
@@ -139,7 +147,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "TUI-006",
@@ -149,12 +157,15 @@
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["TUI-001", "TUI-004"],
+      "dependsOn": [
+        "TUI-001",
+        "TUI-004"
+      ],
       "notes": "This modal blocks the main app until the user responds. Use Textual's push_screen/dismiss pattern.",
       "implementationNotes": [
         "Create src/mARCH/ui/tui_widgets/tool_modal.py with ToolModal(ModalScreen) class",
         "Display tool name, description, and formatted arguments in a bordered panel",
-        "Bind keyboard shortcuts: y=yes_once, a=always, n=deny, Esc=deny — call self.dismiss(result) for each",
+        "Bind keyboard shortcuts: y=yes_once, a=always, n=deny, Esc=deny \u2014 call self.dismiss(result) for each",
         "Support arrow up/down navigation between options and number shortcuts 1/2/3/4 as alternative selection",
         "Integrate in tui_app.py via self.push_screen(ToolModal(tool_info), callback) pattern"
       ],
@@ -168,7 +179,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "TUI-007",
@@ -178,25 +189,27 @@
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["TUI-003"],
+      "dependsOn": [
+        "TUI-003"
+      ],
       "notes": "Braille spinner is the default. Status bar replaces the footer placeholder.",
       "implementationNotes": [
         "Create src/mARCH/ui/tui_widgets/spinners.py with SpinnerWidget(Static) that uses set_interval for animation at ~100ms",
-        "Spinner frames: braille pattern ⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ cycling through on each timer tick",
+        "Spinner frames: braille pattern \u280b\u2819\u2839\u2838\u283c\u2834\u2826\u2827\u2807\u280f cycling through on each timer tick",
         "Create src/mARCH/ui/tui_widgets/status_bar.py with StatusBar(Static) showing operation text and status icon",
-        "Status icons: ✓ (success/green), ✗ (error/red), ⚠ (warning/yellow), ● (info/blue)",
+        "Status icons: \u2713 (success/green), \u2717 (error/red), \u26a0 (warning/yellow), \u25cf (info/blue)",
         "Wire status bar into tui_app.py footer zone, replacing the footer placeholder"
       ],
       "acceptanceCriteria": [
         "SpinnerWidget animates through braille frames on a timer interval",
         "StatusBar displays current operation text with the appropriate status icon",
-        "Status icons map correctly: success=✓, error=✗, warning=⚠, info=●",
+        "Status icons map correctly: success=\u2713, error=\u2717, warning=\u26a0, info=\u25cf",
         "Spinner stops and clears when the associated operation completes",
         "Unit test verifies spinner frame cycling returns correct sequence",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "TUI-008",
@@ -206,12 +219,15 @@
       "complexity": "standard",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["TUI-001", "TUI-004"],
+      "dependsOn": [
+        "TUI-001",
+        "TUI-004"
+      ],
       "notes": "This replaces the current plan_display.py approval flow. Keep old code until this modal is proven.",
       "implementationNotes": [
         "Create src/mARCH/ui/tui_widgets/plan_modal.py with PlanModal(ModalScreen) class",
         "Display plan summary rendered as markdown and a task list using Textual Markdown widget",
-        "Bind keyboard shortcuts: e=exit_only, i=interactive, a=autopilot, f=autopilot_fleet — call self.dismiss(action) for each",
+        "Bind keyboard shortcuts: e=exit_only, i=interactive, a=autopilot, f=autopilot_fleet \u2014 call self.dismiss(action) for each",
         "Return selected action string via dismiss() to the calling app callback",
         "Replace current plan_display.py approval flow by wiring PlanModal into tui_app.py"
       ],
@@ -226,7 +242,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "TUI-009",
@@ -236,7 +252,9 @@
       "complexity": "trivial",
       "riskLevel": "low",
       "preferredModel": "claude-sonnet-4.6",
-      "dependsOn": ["TUI-001"],
+      "dependsOn": [
+        "TUI-001"
+      ],
       "notes": "This is a pure data/utility story with no UI side effects. Other widgets adopt it once it lands.",
       "implementationNotes": [
         "Create src/mARCH/ui/theme.py with a Theme dataclass containing color fields: brand, text, background, accent, border, statusSuccess, statusError, statusWarning, statusInfo, and per-mode colors",
@@ -253,7 +271,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

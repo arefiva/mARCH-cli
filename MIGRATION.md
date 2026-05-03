@@ -9,10 +9,10 @@ This guide documents the differences between the original JavaScript Copilot CLI
 The command-line interface is **100% compatible** with the JavaScript version:
 
 ```bash
-march                    # Start REPL (same as original)
-march --version          # Show version
-march --experimental     # Enable experimental mode
-march --model gpt-4      # Specify model
+march-cli                    # Start REPL (same as original)
+march-cli --version          # Show version
+march-cli --experimental     # Enable experimental mode
+march-cli --model gpt-4      # Specify model
 ```
 
 All slash commands work identically:

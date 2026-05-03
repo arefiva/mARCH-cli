@@ -8,3 +8,4 @@
 | US-001: Fix Shift+Tab Mode Switching | — | — |
 | US-002: Verify Plan Mode Workflow Integration | — | — |
 | US-003: Verify Cleanup and Validate Coverage | — | — |
+| US-004: Reject ambiguous multi-match file edits | — | — |

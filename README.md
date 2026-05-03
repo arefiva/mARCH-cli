@@ -43,7 +43,7 @@ cd march
 pip install -e .
 
 # Verify installation
-march --version
+march-cli --version
 ```
 
 ### Optional Dependencies
@@ -75,13 +75,13 @@ choco install ripgrep  # Windows
 march
 
 # Show version and features
-march --version
+march-cli --version
 
 # Enable experimental features
-march --experimental
+march-cli --experimental
 
 # Set log level
-march --log-level debug
+march-cli --log-level debug
 ```
 
 ### Slash Commands
@@ -252,17 +252,17 @@ twine upload dist/*
 ```bash
 # Verify token is set correctly
 export GH_TOKEN="your_token"
-march /status
+march-cli /status
 
 # Re-authenticate
-march /login
+march-cli /login
 ```
 
 ### LSP Not Working
 
 ```bash
 # Check LSP configuration
-march /status  # Shows LSP status
+march-cli /status  # Shows LSP status
 
 # Install required language server
 pip install pylsp  # For Python

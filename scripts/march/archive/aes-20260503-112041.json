@@ -1,0 +1,120 @@
+{
+  "project": "copilot-cli-python",
+  "branchName": "feature/review-fixes",
+  "description": "Fix 5 issues from code review: shell injection, zombie processes, deadlock, ambiguous edits, temp file leak",
+  "_source": "tasks/prd-fix-plan-mode/prd-review-fixes.md",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Mitigate shell injection in bash executor",
+      "description": "As a platform operator, I want bash command execution to be protected against shell injection so that untrusted command strings cannot escalate to arbitrary code execution.",
+      "priority": 1,
+      "complexity": "complex",
+      "riskLevel": "high",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [],
+      "notes": "This is the highest-severity finding. Switching from create_subprocess_shell to create_subprocess_exec changes behaviour for commands using shell features, so a shell=True opt-in flag must be provided.",
+      "implementationNotes": [
+        "Modify src/mARCH/tasks/bash_executor.py method _run_command_streaming (line 122): replace asyncio.create_subprocess_shell() with asyncio.create_subprocess_exec(*shlex.split(command))",
+        "Add 'import shlex' at the top of the file",
+        "Read an optional 'shell' boolean from task.params (default False). When True, fall back to create_subprocess_shell with a docstring warning about the security implications",
+        "Handle edge case: if shlex.split returns an empty list, raise a clear RuntimeError before spawning the subprocess",
+        "Create tests/tasks/test_bash_executor.py with unit tests covering metacharacter rejection, quoted-argument tokenisation, shell=True opt-in, and empty-command edge case"
+      ],
+      "acceptanceCriteria": [
+        "Unit test verifies that a command string with shell metacharacters (e.g., 'echo hello; rm -rf /') is NOT executed through a shell when 'shell' param is absent or false",
+        "Unit test verifies that shlex.split correctly tokenises a quoted command like 'echo \"hello world\"' into ['echo', 'hello world']",
+        "Unit test verifies that when shell=True is explicitly set in task params, create_subprocess_shell is used instead",
+        "Unit test covers edge case: empty command after shlex.split raises a clear error",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Kill subprocess on timeout and clean up temp files",
+      "description": "As a platform operator, I want timed-out subprocesses to be killed immediately and overflow temp files to be cleaned up so that the system does not leak zombie processes or disk space.",
+      "priority": 2,
+      "complexity": "standard",
+      "riskLevel": "medium",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [
+        "US-001"
+      ],
+      "notes": "The process handle must be accessible in the timeout handler. Consider using an instance variable or refactoring _run_command_streaming to yield the process reference before awaiting completion.",
+      "implementationNotes": [
+        "Modify src/mARCH/tasks/bash_executor.py method execute (lines 58-104): store the subprocess handle so it is accessible in the except asyncio.TimeoutError block",
+        "In the TimeoutError handler (line 89), call process.kill() then await process.wait() to reap the zombie process",
+        "Add a set _temp_files on the BashTaskExecutor instance to track paths created by _create_temp_output_file()",
+        "Add a public cleanup_temp_files() method that deletes all tracked files, handles FileNotFoundError gracefully, and clears the set",
+        "Register an atexit handler in __init__ as a safety net that calls cleanup_temp_files()",
+        "Add unit tests in tests/tasks/test_bash_executor.py covering process kill on timeout, zombie reaping, temp file cleanup idempotency, and already-deleted file handling"
+      ],
+      "acceptanceCriteria": [
+        "Unit test verifies that after a timeout, process.kill() is called on the subprocess",
+        "Unit test verifies that after a timeout, process.wait() is awaited (no zombie)",
+        "Unit test verifies that cleanup_temp_files() deletes all tracked temp files from disk",
+        "Unit test covers edge case: cleanup is idempotent \u2014 calling it twice does not raise",
+        "Unit test covers edge case: cleanup handles already-deleted files gracefully (no FileNotFoundError)",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Read stdout and stderr concurrently to prevent deadlock",
+      "description": "As a platform operator, I want stdout and stderr to be read concurrently so that subprocesses producing large stderr output do not deadlock.",
+      "priority": 3,
+      "complexity": "standard",
+      "riskLevel": "medium",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [
+        "US-001"
+      ],
+      "notes": "This modifies the same _run_command_streaming method touched by US-001, so it depends on that story. The overflow-to-disk path needs care when both streams write concurrently.",
+      "implementationNotes": [
+        "Modify src/mARCH/tasks/bash_executor.py method _run_command_streaming (lines 136-171): extract per-stream reading into a helper coroutine _read_stream(stream, buffer, size_tracker, label)",
+        "Use asyncio.gather() to read stdout and stderr concurrently instead of the current sequential pattern",
+        "If both streams overflow to disk, use separate temp files per stream (or an asyncio.Lock around shared file writes) to prevent data corruption from interleaved writes",
+        "Preserve the existing 100MB per-stream limit and overflow-to-disk behaviour",
+        "Add unit tests in tests/tasks/test_bash_executor.py verifying no deadlock with >64KB stderr, concurrent capture correctness, and overflow behaviour"
+      ],
+      "acceptanceCriteria": [
+        "Unit test verifies that a subprocess writing >64KB to stderr while stdout is still open does NOT deadlock (completes within 5 seconds)",
+        "Unit test verifies that stdout and stderr content are both fully captured when both streams produce output simultaneously",
+        "Unit test verifies that overflow-to-disk still works correctly when output exceeds MAX_OUTPUT_SIZE",
+        "Unit test covers edge case: subprocess that produces no output on either stream returns empty strings",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Reject ambiguous multi-match file edits",
+      "description": "As a developer, I want file edit operations to fail explicitly when the search string matches multiple locations so that edits are never silently applied to the wrong occurrence.",
+      "priority": 1,
+      "complexity": "trivial",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [],
+      "notes": "This is a small, isolated change in file_executor.py with no dependencies on the bash_executor stories.",
+      "implementationNotes": [
+        "Modify src/mARCH/tasks/file_executor.py method _edit_file (lines 299-310): after confirming old_str exists in content, add content.count(old_str) > 1 check that raises ValueError with the match count",
+        "Include a truncated snippet of old_str (first 50 chars) and the count in the error message for debuggability",
+        "Create tests/tasks/test_file_executor.py with unit tests covering single-match success, multi-match rejection, absent-string rejection, and substring edge case"
+      ],
+      "acceptanceCriteria": [
+        "Unit test verifies that editing a file where old_str appears exactly once succeeds and produces the correct output",
+        "Unit test verifies that editing a file where old_str appears 3 times raises ValueError with a message containing the count",
+        "Unit test verifies that editing a file where old_str is absent raises ValueError (existing behaviour preserved)",
+        "Unit test covers edge case: old_str that is a substring of a longer match is still counted correctly",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": true
+    }
+  ]
+}

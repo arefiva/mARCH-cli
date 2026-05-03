@@ -53,3 +53,33 @@
 {"timestamp": "2026-05-03T06:35:10.753777+00:00", "event": "mcp_check", "trace_id": "cc248acec0bb", "span_id": "d50defa18d1c", "status": "not_configured", "reason": "no .mcp.json"}
 {"timestamp": "2026-05-03T06:35:10.753918+00:00", "event": "quality_gate_end", "trace_id": "cc248acec0bb", "span_id": "d50defa18d1c", "parent_span_id": null, "status": "ok", "duration_ms": 0.3, "gate": "mcp_verify", "result": "not_configured"}
 {"timestamp": "2026-05-03T06:35:10.764105+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T07:50:34.178354+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T07:50:34.181026+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T07:50:34.181207+00:00", "event": "quality_gate_start", "trace_id": "468f0290956e", "span_id": "6871e9619ada", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T07:50:34.181364+00:00", "event": "mcp_check", "trace_id": "468f0290956e", "span_id": "6871e9619ada", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T07:50:34.181490+00:00", "event": "quality_gate_end", "trace_id": "468f0290956e", "span_id": "6871e9619ada", "parent_span_id": null, "status": "ok", "duration_ms": 0.2, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T07:50:34.211176+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T08:20:58.508368+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T08:20:58.510958+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/fix-plan-mode", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T08:20:58.511095+00:00", "event": "quality_gate_start", "trace_id": "19eeacd81d7c", "span_id": "dce1418dcfab", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T08:20:58.511169+00:00", "event": "mcp_check", "trace_id": "19eeacd81d7c", "span_id": "dce1418dcfab", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T08:20:58.511219+00:00", "event": "quality_gate_end", "trace_id": "19eeacd81d7c", "span_id": "dce1418dcfab", "parent_span_id": null, "status": "ok", "duration_ms": 0.1, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T08:20:58.531359+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix Shift+Tab Mode Switching", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T08:22:48.565571+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 110.0, "estimated_output_tokens": 1141, "premium_requests": 1}
+{"timestamp": "2026-05-03T08:25:43.330937+00:00", "event": "token_usage", "model": "claude-opus-4.6", "duration_seconds": 174.8, "estimated_output_tokens": 3002, "premium_requests": 1}
+{"timestamp": "2026-05-03T08:28:21.387973+00:00", "event": "token_usage", "model": "claude-opus-4.6", "duration_seconds": 158.1, "estimated_output_tokens": 721, "premium_requests": 1}
+{"timestamp": "2026-05-03T08:28:21.388166+00:00", "event": "review_fixes_planned", "branch": "feature/fix-plan-mode"}
+{"timestamp": "2026-05-03T08:28:21.391189+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Mitigate shell injection in bash executor", "model": "claude-sonnet-4.6", "complexity": "complex"}
+{"timestamp": "2026-05-03T09:08:03.731029+00:00", "event": "mcp_config_skipped", "reason": "no_required_technologies"}
+{"timestamp": "2026-05-03T09:08:03.738432+00:00", "event": "run_started", "project": "copilot-cli-python", "branch": "feature/review-fixes", "model": "auto", "model_override": false}
+{"timestamp": "2026-05-03T09:08:03.738696+00:00", "event": "quality_gate_start", "trace_id": "1042c56bc211", "span_id": "48d3175e5a84", "parent_span_id": null, "gate": "mcp_verify"}
+{"timestamp": "2026-05-03T09:08:03.738863+00:00", "event": "mcp_check", "trace_id": "1042c56bc211", "span_id": "48d3175e5a84", "status": "not_configured", "reason": "no .mcp.json"}
+{"timestamp": "2026-05-03T09:08:03.738947+00:00", "event": "quality_gate_end", "trace_id": "1042c56bc211", "span_id": "48d3175e5a84", "parent_span_id": null, "status": "ok", "duration_ms": 0.2, "gate": "mcp_verify", "result": "not_configured"}
+{"timestamp": "2026-05-03T09:08:03.744710+00:00", "event": "session_started", "story_id": "US-004", "session": 1, "attempt": 1, "title": "Reject ambiguous multi-match file edits", "model": "claude-sonnet-4.6", "complexity": "trivial"}
+{"timestamp": "2026-05-03T09:15:26.181239+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 442.4, "estimated_output_tokens": 2559, "premium_requests": 1}
+{"timestamp": "2026-05-03T09:20:06.597687+00:00", "event": "token_usage", "model": "claude-opus-4.6", "duration_seconds": 280.4, "estimated_output_tokens": 2487, "premium_requests": 1}
+{"timestamp": "2026-05-03T09:22:18.366708+00:00", "event": "token_usage", "model": "claude-opus-4.6", "duration_seconds": 131.8, "estimated_output_tokens": 816, "premium_requests": 1}
+{"timestamp": "2026-05-03T09:22:18.366899+00:00", "event": "review_fixes_planned", "branch": "feature/review-fixes"}
+{"timestamp": "2026-05-03T09:22:18.369782+00:00", "event": "session_started", "story_id": "US-001", "session": 1, "attempt": 1, "title": "Fix subprocess resource leak on stream failure", "model": "claude-sonnet-4.6", "complexity": "standard"}
+{"timestamp": "2026-05-03T09:24:11.675497+00:00", "event": "token_usage", "model": "claude-sonnet-4.6", "duration_seconds": 113.3, "estimated_output_tokens": 479, "premium_requests": 1}
+{"timestamp": "2026-05-03T09:24:11.676482+00:00", "event": "run_completed", "result": "all_stories_passed"}

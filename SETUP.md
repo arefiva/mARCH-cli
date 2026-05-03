@@ -67,7 +67,7 @@ export GH_TOKEN=your_github_token_here
 Run the CLI and use the setup command:
 
 ```bash
-march /setup anthropic
+march-cli /setup anthropic
 ```
 
 This will prompt you to enter your API key interactively and save it to the config.

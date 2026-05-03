@@ -70,12 +70,12 @@ Use these special commands during your session:
 ### Command-line Flags
 
 ```bash
-march --help              # Show help message
-march --version           # Show version
-march --banner            # Show ASCII art banner
-march --model claude-3    # Specify AI model
-march --experimental      # Enable experimental features
-march --log-level debug   # Set logging level (DEBUG, INFO, WARNING, ERROR)
+march-cli --help              # Show help message
+march-cli --version           # Show version
+march-cli --banner            # Show ASCII art banner
+march-cli --model claude-3    # Specify AI model
+march-cli --experimental      # Enable experimental features
+march-cli --log-level debug   # Set logging level (DEBUG, INFO, WARNING, ERROR)
 ```
 
 ## Examples

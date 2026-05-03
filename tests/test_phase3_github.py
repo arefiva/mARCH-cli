@@ -60,8 +60,10 @@ class TestGitHubAuthenticator:
         assert auth.config_dir == tmp_path
         assert auth.token_file == tmp_path / "github_token.json"
 
-    def test_store_and_retrieve_token(self, tmp_path):
+    def test_store_and_retrieve_token(self, tmp_path, monkeypatch):
         """Test storing and retrieving tokens."""
+        monkeypatch.delenv("GH_TOKEN", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         auth = GitHubAuthenticator(tmp_path)
         auth.store_token("test_token", "pat")
 
@@ -70,8 +72,10 @@ class TestGitHubAuthenticator:
         assert token.token == "test_token"
         assert token.token_type == "pat"
 
-    def test_clear_token(self, tmp_path):
+    def test_clear_token(self, tmp_path, monkeypatch):
         """Test clearing token."""
+        monkeypatch.delenv("GH_TOKEN", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         auth = GitHubAuthenticator(tmp_path)
         auth.store_token("test_token", "pat")
         assert auth.get_token() is not None
@@ -206,13 +210,17 @@ class TestGitHubIntegration:
         assert integration.api_client is not None
         assert integration.context_extractor is not None
 
-    def test_integration_authentication_check(self, tmp_path):
+    def test_integration_authentication_check(self, tmp_path, monkeypatch):
         """Test authentication check."""
+        monkeypatch.delenv("GH_TOKEN", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         integration = GitHubIntegration(tmp_path)
         assert not integration.is_authenticated()
 
-    def test_integration_logout(self, tmp_path):
+    def test_integration_logout(self, tmp_path, monkeypatch):
         """Test logout clears authentication."""
+        monkeypatch.delenv("GH_TOKEN", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         integration = GitHubIntegration(tmp_path)
         integration.authenticator.store_token("test_token", "pat")
         assert integration.get_auth_token() is not None

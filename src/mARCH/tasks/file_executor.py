@@ -7,7 +7,6 @@ and memory-safe size checks before reading large files.
 
 import asyncio
 from pathlib import Path
-from typing import Optional
 
 from mARCH.core.task_executor import TaskExecutor
 from mARCH.core.task_types import TaskBase, TaskResult, TaskType
@@ -45,7 +44,7 @@ class FileTaskExecutor(TaskExecutor):
             return TaskResult(
                 task_id=task.id,
                 status="failed",
-                error=f"File operation failed: {str(e)}",
+                error=f"File operation failed: {e!s}",
             )
 
     async def _execute_read(self, task: TaskBase) -> TaskResult:
@@ -98,7 +97,7 @@ class FileTaskExecutor(TaskExecutor):
             return TaskResult(
                 task_id=task.id,
                 status="failed",
-                error=f"Failed to check file size: {str(e)}",
+                error=f"Failed to check file size: {e!s}",
             )
 
         try:
@@ -123,7 +122,7 @@ class FileTaskExecutor(TaskExecutor):
             return TaskResult(
                 task_id=task.id,
                 status="failed",
-                error=f"Failed to read file: {str(e)}",
+                error=f"Failed to read file: {e!s}",
             )
 
     async def _execute_create(self, task: TaskBase) -> TaskResult:
@@ -171,7 +170,7 @@ class FileTaskExecutor(TaskExecutor):
             return TaskResult(
                 task_id=task.id,
                 status="failed",
-                error=f"Failed to create file: {str(e)}",
+                error=f"Failed to create file: {e!s}",
             )
 
     async def _execute_edit(self, task: TaskBase) -> TaskResult:
@@ -232,7 +231,7 @@ class FileTaskExecutor(TaskExecutor):
             return TaskResult(
                 task_id=task.id,
                 status="failed",
-                error=f"Failed to edit file: {str(e)}",
+                error=f"Failed to edit file: {e!s}",
             )
 
     @staticmethod
@@ -270,7 +269,7 @@ class FileTaskExecutor(TaskExecutor):
         Returns:
             File contents
         """
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             return f.read()
 
     @staticmethod
@@ -296,12 +295,18 @@ class FileTaskExecutor(TaskExecutor):
         Raises:
             ValueError: If old_str not found in file
         """
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         if old_str not in content:
             raise ValueError(
                 f"Text to replace not found in {file_path}: {old_str[:50]}..."
+            )
+
+        count = content.count(old_str)
+        if count > 1:
+            raise ValueError(
+                f"Ambiguous edit: '{old_str[:50]}' matches {count} locations in {file_path}"
             )
 
         new_content = content.replace(old_str, new_str, 1)

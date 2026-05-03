@@ -114,7 +114,7 @@
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

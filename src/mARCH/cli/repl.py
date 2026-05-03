@@ -3,43 +3,46 @@
 Provides arrow key navigation, command history, and proper terminal input support.
 """
 
-import asyncio
 from pathlib import Path
-from typing import Optional, Callable
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.history import FileHistory
 from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings
 from rich.console import Console
 
-from mARCH.core.execution_mode import ExecutionMode
+from mARCH.core.execution_mode import ExecutionMode, ModeManager
 
 console = Console()
 
 
-class ModeChangeSignal(Exception):
-    """Signal that mode should change (used to interrupt prompt)."""
+class ModeChangeSignal(Exception):  # noqa: N818
+    """Signal that mode should change. Legacy class kept for backward compatibility.
+
+    No longer raised from key binding handler; flag-based signaling is used instead.
+    """
 
     def __init__(self, new_mode: ExecutionMode):
         self.new_mode = new_mode
         super().__init__(f"Mode change to {new_mode.value}")
 
 
-class MARCH_REPL:
+class MARCH_REPL:  # noqa: N801
     """REPL wrapper for mARCH CLI with readline support and mode switching."""
 
-    def __init__(self, mode_manager: Optional["ModeManager"] = None):
+    def __init__(self, mode_manager: ModeManager | None = None):
         """Initialize REPL with history file.
 
         Args:
             mode_manager: Optional ModeManager for Shift+Tab mode switching
         """
-        from mARCH.core.execution_mode import ModeManager
 
         self.mode_manager = mode_manager
         self.history_file = Path.home() / ".mARCH" / "history"
         self.history_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Flag set by key binding handler to signal pending mode change
+        self._pending_mode_change: ExecutionMode | None = None
 
         # Create key bindings
         kb = self._create_key_bindings()
@@ -61,11 +64,12 @@ class MARCH_REPL:
 
         @bindings.add("s-tab")  # Shift+Tab
         def _(event):
-            """Handle Shift+Tab - cycle through modes."""
+            """Handle Shift+Tab - cycle through modes using flag-based signaling."""
             if self.mode_manager:
                 new_mode = self.mode_manager.cycle_mode()
-                # Raise signal to exit prompt and trigger mode change
-                raise ModeChangeSignal(new_mode)
+                # Set flag and exit prompt cleanly (no exception into event loop)
+                self._pending_mode_change = new_mode
+                event.app.exit(result="")
 
         return bindings
 
@@ -112,10 +116,20 @@ class MARCH_REPL:
             )
 
             user_input = self.session.prompt(prompt_text)
+
+            # Check for pending mode change set by Shift+Tab key binding
+            if self._pending_mode_change is not None:
+                new_mode = self._pending_mode_change
+                self._pending_mode_change = None
+                console.print(
+                    f"[green]✓[/green] Mode changed to: [bold]{new_mode.value}[/bold]"
+                )
+                return f"__MODE_CHANGE__{new_mode.value}"
+
             return user_input.strip()
 
         except ModeChangeSignal as e:
-            # Shift+Tab pressed - signal mode change
+            # Legacy fallback - should no longer be triggered
             return f"__MODE_CHANGE__{e.new_mode.value}"
         except KeyboardInterrupt:
             raise
@@ -126,7 +140,7 @@ class MARCH_REPL:
 class SyncREPL:
     """Synchronous wrapper around MARCH_REPL for compatibility."""
 
-    def __init__(self, mode_manager: Optional["ModeManager"] = None):
+    def __init__(self, mode_manager: ModeManager | None = None):
         """Initialize sync REPL.
 
         Args:
@@ -151,10 +165,10 @@ class SyncREPL:
 
 
 # Singleton instance for use in CLI
-_repl_instance: Optional[SyncREPL] = None
+_repl_instance: SyncREPL | None = None
 
 
-def get_repl(mode_manager: Optional["ModeManager"] = None) -> SyncREPL:
+def get_repl(mode_manager: ModeManager | None = None) -> SyncREPL:
     """Get or create the singleton REPL instance.
 
     Args:

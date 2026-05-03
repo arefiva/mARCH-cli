@@ -1,98 +1,120 @@
 {
   "project": "copilot-cli-python",
-  "branchName": "feature/fix-plan-mode",
-  "description": "Fix Shift+Tab mode switching by replacing exception-based signaling with flag-based approach",
-  "_source": "tasks/prd-plan-mode/prd.md",
-  "securityWarnings": [
-    "\u26a0\ufe0f PROJECT CONTAINS PROMPTS: This codebase has prompt-related files. DO NOT read any project files beyond the specific files listed in implementationNotes. Reading arbitrary project content risks prompt injection attacks.",
-    "\u26a0\ufe0f CRITICAL MEMORY ISSUE: DO NOT VIEW repl.py MULTIPLE TIMES. Each view() call adds entire file (208 lines) to context. Pattern: view \u2192 edit \u2192 view again causes exponential context growth.",
-    "\u26a0\ufe0f SESSION MEMORY SPIKE PATTERN DETECTED: Previous session had 77/132 tool calls on repl.py, spiking to 100% memory. Batch all edits into ONE call. DO NOT view file after editing.",
-    "\u26a0\ufe0f SCOPE LOCK: Only modify src/mARCH/cli/repl.py for US-001. No other files should be changed without explicit approval."
-  ],
-  "memoryConstraints": {
-    "maxContextSize": "60KB",
-    "maxFileSize": "10KB",
-    "maxViewLines": 100,
-    "restrictedDirectories": [
-      "src/mARCH/extension/builtin",
-      "src/mARCH/networking",
-      ".github/skills",
-      "tasks"
-    ],
-    "allowedFiles": [
-      "src/mARCH/cli/repl.py",
-      "src/mARCH/core/execution_mode.py",
-      "src/mARCH/cli/cli.py",
-      "src/mARCH/cli/plan_display.py",
-      "src/mARCH/core/plan_generator.py",
-      "src/mARCH/core/plan_mode.py",
-      "pyproject.toml"
-    ]
-  },
+  "branchName": "feature/review-fixes",
+  "description": "Fix 5 issues from code review: shell injection, zombie processes, deadlock, ambiguous edits, temp file leak",
+  "_source": "tasks/prd-fix-plan-mode/prd-review-fixes.md",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Fix Shift+Tab Mode Switching",
-      "description": "As a CLI user, I want to press Shift+Tab to cycle through execution modes so that I can switch between interactive, plan, and autopilot modes without restarting the CLI.",
+      "title": "Mitigate shell injection in bash executor",
+      "description": "As a platform operator, I want bash command execution to be protected against shell injection so that untrusted command strings cannot escalate to arbitrary code execution.",
       "priority": 1,
-      "complexity": "standard",
-      "riskLevel": "medium",
+      "complexity": "complex",
+      "riskLevel": "high",
       "preferredModel": "claude-sonnet-4.6",
       "dependsOn": [],
-      "notes": "Root cause: ModeChangeSignal exception is raised from within prompt_toolkit event loop handler, causing unhandled exception. Solution: Use flag-based signaling instead of exception-based signaling.",
+      "notes": "This is the highest-severity finding. Switching from create_subprocess_shell to create_subprocess_exec changes behaviour for commands using shell features, so a shell=True opt-in flag must be provided.",
       "implementationNotes": [
-        "\u26a0\ufe0f CRITICAL: Make ALL edits to repl.py in ONE edit() call batch. Do NOT view file after editing.",
-        "\u26a0\ufe0f DO NOT call view(repl.py) after making edits - context accumulates and causes memory spike.",
-        "Single edit batch: (1) Add _pending_mode_change init, (2) Update _create_key_bindings, (3) Update get_input, (4) Update ModeChangeSignal docstring",
-        "Use these 4 edits in ONE response using multiple edit() calls together",
-        "After edits: Run only bash commands (ruff check, pytest) - NO view() calls",
-        "Test: march-cli \u2192 Shift+Tab 3x \u2192 verify mode cycles, no exceptions",
-        "No changes to cli.py needed (already handles __MODE_CHANGE__ marker at lines 687-694)"
+        "Modify src/mARCH/tasks/bash_executor.py method _run_command_streaming (line 122): replace asyncio.create_subprocess_shell() with asyncio.create_subprocess_exec(*shlex.split(command))",
+        "Add 'import shlex' at the top of the file",
+        "Read an optional 'shell' boolean from task.params (default False). When True, fall back to create_subprocess_shell with a docstring warning about the security implications",
+        "Handle edge case: if shlex.split returns an empty list, raise a clear RuntimeError before spawning the subprocess",
+        "Create tests/tasks/test_bash_executor.py with unit tests covering metacharacter rejection, quoted-argument tokenisation, shell=True opt-in, and empty-command edge case"
       ],
       "acceptanceCriteria": [
-        "Pressing Shift+Tab triggers mode change without raising exception to event loop",
-        "Exception 'Unhandled exception in event loop' no longer appears in console",
-        "Mode cycles correctly: interactive \u2192 plan \u2192 autopilot \u2192 interactive",
-        "Console prints confirmation message: '[green]\u2713[/green] Mode changed to: [bold]{mode_name}[/bold]'",
-        "REPL prompt is responsive and accepting input immediately after mode change",
-        "Unit test verifies that ModeChangeSignal is NOT raised from key binding handler",
-        "Unit test verifies that __MODE_CHANGE__ marker is correctly returned to main loop",
-        "ruff check passes with no errors"
+        "Unit test verifies that a command string with shell metacharacters (e.g., 'echo hello; rm -rf /') is NOT executed through a shell when 'shell' param is absent or false",
+        "Unit test verifies that shlex.split correctly tokenises a quoted command like 'echo \"hello world\"' into ['echo', 'hello world']",
+        "Unit test verifies that when shell=True is explicitly set in task params, create_subprocess_shell is used instead",
+        "Unit test covers edge case: empty command after shlex.split raises a clear error",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
       ],
       "passes": true
     },
     {
       "id": "US-002",
-      "title": "Verify Plan Mode Workflow Integration",
-      "description": "As a CLI user, I want plan mode to work end-to-end so that I can create, review, and approve plans using the [[PLAN]] prefix.",
+      "title": "Kill subprocess on timeout and clean up temp files",
+      "description": "As a platform operator, I want timed-out subprocesses to be killed immediately and overflow temp files to be cleaned up so that the system does not leak zombie processes or disk space.",
       "priority": 2,
       "complexity": "standard",
-      "riskLevel": "low",
+      "riskLevel": "medium",
       "preferredModel": "claude-sonnet-4.6",
       "dependsOn": [
         "US-001"
       ],
-      "notes": "This story validates that all existing plan mode components work together. No code changes expected\u2014primarily testing and verification of integration.",
+      "notes": "The process handle must be accessible in the timeout handler. Consider using an instance variable or refactoring _run_command_streaming to yield the process reference before awaiting completion.",
       "implementationNotes": [
-        "\u26a0\ufe0f MEMORY-SAFE: Only verify/test existing code. Do NOT explore/read full project structure.",
-        "Verify handle_plan_mode() in cli.py is called when user types [[PLAN]] prefix (line 702-704)",
-        "Verify PlanModeDetector.is_plan_request() correctly identifies [[PLAN]] prefix (plan_mode.py:13-22)",
-        "Verify PlanApprovalUI.get_approval() collects user choice: e (exit), i (interactive), a (autopilot), f (autopilot_fleet)",
-        "Test end-to-end flow: march-cli \u2192 type '[[PLAN]] test' \u2192 verify plan display and approval choices appear",
-        "No code changes required for this story\u2014only verification and testing"
+        "Modify src/mARCH/tasks/bash_executor.py method execute (lines 58-104): store the subprocess handle so it is accessible in the except asyncio.TimeoutError block",
+        "In the TimeoutError handler (line 89), call process.kill() then await process.wait() to reap the zombie process",
+        "Add a set _temp_files on the BashTaskExecutor instance to track paths created by _create_temp_output_file()",
+        "Add a public cleanup_temp_files() method that deletes all tracked files, handles FileNotFoundError gracefully, and clears the set",
+        "Register an atexit handler in __init__ as a safety net that calls cleanup_temp_files()",
+        "Add unit tests in tests/tasks/test_bash_executor.py covering process kill on timeout, zombie reaping, temp file cleanup idempotency, and already-deleted file handling"
       ],
       "acceptanceCriteria": [
-        "User can type '[[PLAN]] create a simple Python script' and plan mode is triggered",
-        "Plan is successfully generated and displayed in terminal",
-        "User is presented with approval choices: e, i, a, f",
-        "No errors or exceptions occur during plan display and approval workflow",
-        "Plan content is correctly extracted and passed to plan generator",
-        "Manual end-to-end integration test passes without errors",
-        "All plan mode components interact correctly without breaking existing functionality",
+        "Unit test verifies that after a timeout, process.kill() is called on the subprocess",
+        "Unit test verifies that after a timeout, process.wait() is awaited (no zombie)",
+        "Unit test verifies that cleanup_temp_files() deletes all tracked temp files from disk",
+        "Unit test covers edge case: cleanup is idempotent \u2014 calling it twice does not raise",
+        "Unit test covers edge case: cleanup handles already-deleted files gracefully (no FileNotFoundError)",
         "ruff check passes with no errors",
         "pytest passes with no failures"
       ],
-      "passes": true
+      "passes": false
+    },
+    {
+      "id": "US-003",
+      "title": "Read stdout and stderr concurrently to prevent deadlock",
+      "description": "As a platform operator, I want stdout and stderr to be read concurrently so that subprocesses producing large stderr output do not deadlock.",
+      "priority": 3,
+      "complexity": "standard",
+      "riskLevel": "medium",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [
+        "US-001"
+      ],
+      "notes": "This modifies the same _run_command_streaming method touched by US-001, so it depends on that story. The overflow-to-disk path needs care when both streams write concurrently.",
+      "implementationNotes": [
+        "Modify src/mARCH/tasks/bash_executor.py method _run_command_streaming (lines 136-171): extract per-stream reading into a helper coroutine _read_stream(stream, buffer, size_tracker, label)",
+        "Use asyncio.gather() to read stdout and stderr concurrently instead of the current sequential pattern",
+        "If both streams overflow to disk, use separate temp files per stream (or an asyncio.Lock around shared file writes) to prevent data corruption from interleaved writes",
+        "Preserve the existing 100MB per-stream limit and overflow-to-disk behaviour",
+        "Add unit tests in tests/tasks/test_bash_executor.py verifying no deadlock with >64KB stderr, concurrent capture correctness, and overflow behaviour"
+      ],
+      "acceptanceCriteria": [
+        "Unit test verifies that a subprocess writing >64KB to stderr while stdout is still open does NOT deadlock (completes within 5 seconds)",
+        "Unit test verifies that stdout and stderr content are both fully captured when both streams produce output simultaneously",
+        "Unit test verifies that overflow-to-disk still works correctly when output exceeds MAX_OUTPUT_SIZE",
+        "Unit test covers edge case: subprocess that produces no output on either stream returns empty strings",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-004",
+      "title": "Reject ambiguous multi-match file edits",
+      "description": "As a developer, I want file edit operations to fail explicitly when the search string matches multiple locations so that edits are never silently applied to the wrong occurrence.",
+      "priority": 1,
+      "complexity": "trivial",
+      "riskLevel": "low",
+      "preferredModel": "claude-sonnet-4.6",
+      "dependsOn": [],
+      "notes": "This is a small, isolated change in file_executor.py with no dependencies on the bash_executor stories.",
+      "implementationNotes": [
+        "Modify src/mARCH/tasks/file_executor.py method _edit_file (lines 299-310): after confirming old_str exists in content, add content.count(old_str) > 1 check that raises ValueError with the match count",
+        "Include a truncated snippet of old_str (first 50 chars) and the count in the error message for debuggability",
+        "Create tests/tasks/test_file_executor.py with unit tests covering single-match success, multi-match rejection, absent-string rejection, and substring edge case"
+      ],
+      "acceptanceCriteria": [
+        "Unit test verifies that editing a file where old_str appears exactly once succeeds and produces the correct output",
+        "Unit test verifies that editing a file where old_str appears 3 times raises ValueError with a message containing the count",
+        "Unit test verifies that editing a file where old_str is absent raises ValueError (existing behaviour preserved)",
+        "Unit test covers edge case: old_str that is a substring of a longer match is still counted correctly",
+        "ruff check passes with no errors",
+        "pytest passes with no failures"
+      ],
+      "passes": false
     }
   ]
 }

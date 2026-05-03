@@ -387,3 +387,114 @@ class TestThemeSystem:
         light = get_theme(dark=False)
         assert isinstance(light.background, str)
         assert isinstance(light.text, str)
+
+
+# ============================================================================
+# US-002: AI conversation dispatch loop
+# ============================================================================
+
+
+class TestMarchAppInit:
+    """Tests for MarchApp.__init__ keyword arguments."""
+
+    def test_march_app_default_construction(self):
+        """MarchApp() can be constructed with no arguments."""
+        from mARCH.ui.tui_app import MarchApp
+
+        app = MarchApp()
+        assert app._ai_client is None
+        assert app._agent is None
+
+    def test_march_app_accepts_ai_client_and_agent(self):
+        """MarchApp accepts optional ai_client and agent arguments."""
+        from unittest.mock import MagicMock
+
+        from mARCH.ui.tui_app import MarchApp
+
+        mock_client = MagicMock()
+        mock_agent = MagicMock()
+        app = MarchApp(ai_client=mock_client, agent=mock_agent)
+        assert app._ai_client is mock_client
+        assert app._agent is mock_agent
+
+    def test_march_app_has_on_input_submitted(self):
+        """MarchApp has on_input_submitted event handler."""
+        from mARCH.ui.tui_app import MarchApp
+
+        assert hasattr(MarchApp, "on_input_submitted")
+        assert callable(MarchApp.on_input_submitted)
+
+    def test_march_app_has_stream_ai_response(self):
+        """MarchApp has _stream_ai_response worker method."""
+        from mARCH.ui.tui_app import MarchApp
+
+        assert hasattr(MarchApp, "_stream_ai_response")
+        assert callable(MarchApp._stream_ai_response)
+
+
+@pytest.mark.asyncio
+async def test_submit_text_shows_user_message():
+    """Submitting text via pilot displays a USER MessageWidget in ConversationView."""
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.conversation import ConversationView
+    from mARCH.ui.tui_widgets.message import MessageRole, MessageWidget
+
+    async with MarchApp().run_test(headless=True) as pilot:
+        await pilot.press("H", "e", "l", "l", "o")
+        await pilot.press("enter")
+        await pilot.pause()
+        conv = pilot.app.query_one(ConversationView)
+        messages = list(conv.query(MessageWidget))
+        assert len(messages) >= 1
+        user_msgs = [m for m in messages if m._role == MessageRole.USER]
+        assert len(user_msgs) >= 1
+        assert user_msgs[0]._content == "Hello"
+
+
+@pytest.mark.asyncio
+async def test_submit_text_clears_input():
+    """Submitting text clears the input field."""
+    from textual.widgets import Input
+
+    from mARCH.ui.tui_app import MarchApp
+
+    async with MarchApp().run_test(headless=True) as pilot:
+        await pilot.press("H", "i")
+        await pilot.press("enter")
+        await pilot.pause()
+        inp = pilot.app.query_one("#march-input", Input)
+        assert inp.value == ""
+
+
+@pytest.mark.asyncio
+async def test_submit_empty_text_no_message():
+    """Submitting empty or whitespace-only text does not add a message."""
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.conversation import ConversationView
+    from mARCH.ui.tui_widgets.message import MessageWidget
+
+    async with MarchApp().run_test(headless=True) as pilot:
+        await pilot.press("enter")
+        await pilot.pause()
+        conv = pilot.app.query_one(ConversationView)
+        messages = list(conv.query(MessageWidget))
+        assert len(messages) == 0
+
+
+@pytest.mark.asyncio
+async def test_submit_text_no_ai_client_shows_not_configured():
+    """When ai_client=None, an ASSISTANT 'not configured' message appears."""
+    from mARCH.ui.tui_app import MarchApp
+    from mARCH.ui.tui_widgets.conversation import ConversationView
+    from mARCH.ui.tui_widgets.message import MessageRole, MessageWidget
+
+    async with MarchApp(ai_client=None).run_test(headless=True) as pilot:
+        await pilot.press("H", "i")
+        await pilot.press("enter")
+        await pilot.pause()
+        conv = pilot.app.query_one(ConversationView)
+        messages = list(conv.query(MessageWidget))
+        assistant_msgs = [m for m in messages if m._role == MessageRole.ASSISTANT]
+        assert len(assistant_msgs) >= 1
+        assert "not configured" in assistant_msgs[0]._content
+

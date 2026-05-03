@@ -4,29 +4,25 @@ Main CLI entry point using Typer framework.
 Provides command-line interface with argument parsing, modes, and slash commands.
 """
 
-import asyncio
 import logging
 import sys
-from typing import Generator
 
 import typer
 from rich.console import Console
 
-from mARCH import __version__
-from mARCH import logging_config
-from mARCH.logging_config import setup_logging
+from mARCH import __version__, logging_config
+from mARCH.cli.plan_display import PlanApprovalUI, PlanResultDisplay
 from mARCH.config.config import get_config_manager
+from mARCH.core.agent_state import Agent, ConversationMode
+from mARCH.core.ai_client import ConversationClient
+from mARCH.core.autopilot_executor import AutopilotExecutor
+from mARCH.core.execution_mode import ExecutionMode, ModeManager
+from mARCH.core.plan_generator import PlanGenerator
+from mARCH.core.plan_mode import PlanModeDetector
+from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType
 from mARCH.exceptions import mARCHError
 from mARCH.github.github_integration import GitHubIntegration
-from mARCH.core.slash_commands import SlashCommandParser, SlashCommandType
-from mARCH.core.ai_client import ConversationClient
-from mARCH.core.agent_state import Agent, ConversationMode
-from mARCH.cli.repl import get_repl
-from mARCH.core.execution_mode import ExecutionMode, ModeManager
-from mARCH.core.plan_mode import PlanModeDetector
-from mARCH.core.plan_generator import PlanGenerator
-from mARCH.cli.plan_display import PlanApprovalUI, PlanResultDisplay
-from mARCH.core.autopilot_executor import AutopilotExecutor
+from mARCH.logging_config import setup_logging
 
 logger = logging_config.get_logger(__name__)
 console = Console()
@@ -43,7 +39,6 @@ class AppContext:
 
     def __init__(self) -> None:
         """Initialize application context."""
-        import os
         from pathlib import Path
 
         self.config_manager = get_config_manager()
@@ -521,7 +516,7 @@ def main(
     # Launch Textual TUI
     from mARCH.ui.tui_app import MarchApp
 
-    MarchApp().run()
+    MarchApp(ai_client=ctx.ai_client, agent=ctx.agent).run()
 
 
 def cli_main() -> None:
